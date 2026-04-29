@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Berita Acara Donggala</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tambahan Library Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Gaya Khusus untuk Mode Cetak (Print) */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; }
+            .no-print { display: none !important; }
+            .print-page { page-break-after: always; padding: 2cm; }
+            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .print-table th, .print-table td { border: 1px solid black; padding: 5px; }
+            .print-table th { text-align: center; font-weight: bold; }
+            .text-center { text-align: center; }
+            .font-bold { font-weight: bold; }
+            h1, h2, h3, h4, p { margin: 0; padding: 0; }
+        }
+        body { background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- ========================================================================= -->
+    <!-- HALAMAN LOGIN ADMIN -->
+    <!-- ========================================================================= -->
+    <div id="login-section" class="min-h-screen flex items-center justify-center no-print">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" alt="Logo Donggala" class="w-20 mx-auto mb-4">
+                <h1 class="text-2xl font-bold text-indigo-700">Login Admin</h1>
+                <p class="text-gray-500 text-sm">Aplikasi BAP & BAPB Donggala</p>
+            </div>
+            <form onsubmit="prosesLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Username</label>
+                    <input type="text" id="loginUser" class="w-full p-2 border rounded focus:ring focus:ring-indigo-200" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="loginPass" class="w-full p-2 border rounded focus:ring focus:ring-indigo-200" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow transition">
+                    MASUK
+                </button>
+                <p id="loginError" class="text-red-500 text-sm text-center mt-3 hidden">Username atau Password salah!</p>
+            </form>
+            <div class="mt-4 text-xs text-center text-gray-400">
+                (Default: User = admin | Pass = admin123)
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- APLIKASI UTAMA (DASBOR & FORM) -->
+    <!-- ========================================================================= -->
+    <div id="app-section" class="hidden min-h-screen no-print">
+        <!-- Navbar -->
+        <nav class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3">
+                        <img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" class="w-8 h-8 bg-white rounded-full p-0.5">
+                        <span class="font-bold text-lg hidden sm:block">BAP & BAPB Donggala</span>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button onclick="navigasi('dashboard')" id="nav-dashboard" class="bg-indigo-800 px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Dasbor & Data</button>
+                        <button onclick="navigasi('form')" id="nav-form" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Form Input Baru</button>
+                        <button onclick="logout()" class="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 transition">Keluar</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- SINKRONISASI DATABASE (Tanpa Input URL) -->
+        <div class="max-w-7xl mx-auto px-4 mt-6">
+            <div class="bg-blue-50 p-4 rounded border border-blue-200 flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex-1 w-full">
+                    <h2 class="text-lg font-bold text-blue-900">Sinkronisasi Riwayat Dokumen</h2>
+                    <p class="text-sm text-blue-700">Tarik data terbaru dari Google Spreadsheet ke Dasbor.</p>
+                </div>
+                <button onclick="ambilDataTersimpan()" id="btnSync" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow whitespace-nowrap">
+                    🔄 Sinkronkan Data
+                </button>
+            </div>
+        </div>
+
+        <!-- TAMPILAN DASBOR -->
+        <div id="view-dashboard" class="max-w-7xl mx-auto px-4 mt-6 pb-12">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500">
+                    <p class="text-sm text-gray-500 font-bold uppercase">Total Dokumen</p>
+                    <h3 class="text-3xl font-bold text-gray-800" id="statTotalDoc">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+                    <p class="text-sm text-gray-500 font-bold uppercase">Total Nilai Transaksi</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="statTotalNilai">Rp 0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-yellow-500">
+                    <p class="text-sm text-gray-500 font-bold uppercase">Jumlah Rekanan (CV)</p>
+                    <h3 class="text-3xl font-bold text-gray-800" id="statTotalCV">0</h3>
+                </div>
+            </div>
+
+            <!-- Chart & Tabel Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Grafik -->
+                <div class="bg-white p-4 rounded-lg shadow lg:col-span-1">
+                    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">Grafik Nilai Perusahaan</h2>
+                    <canvas id="grafikCV"></canvas>
+                </div>
+                
+                <!-- Tabel Pencarian -->
+                <div class="bg-white p-4 rounded-lg shadow lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
+                        <h2 class="font-bold text-gray-700">Riwayat Dokumen & Pencarian</h2>
+                        <input type="text" id="searchInput" onkeyup="filterTabel()" placeholder="Cari SPK / Nama CV..." class="p-2 border rounded w-full md:w-64 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                    <div class="overflow-x-auto max-h-96">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="p-2 border">Tanggal Input</th>
+                                    <th class="p-2 border">No. SPK / Kontrak</th>
+                                    <th class="p-2 border">Nama Perusahaan</th>
+                                    <th class="p-2 border">Total Harga</th>
+                                    <th class="p-2 border text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelRiwayatBody">
+                                <tr><td colspan="5" class="text-center p-4 text-gray-500">Belum ada data. Silakan klik Sinkronkan.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAMPILAN FORM (Halaman Input Utama) -->
+        <div id="view-form" class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-lg hidden mt-6 pb-12 mb-12">
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800 border-b pb-4">Formulir BAP & BAPB</h1>
+            
+            <form id="mainForm" onsubmit="event.preventDefault();">
+                <!-- Grid Form 2 Kolom -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Section Kontrak & Dokumen -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Dokumen & Kontrak</h2>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Tanggal Dokumen (BAP & BAPB)</label>
+                            <input type="date" id="tglDokumen" class="w-full mt-1 p-2 border rounded focus:ring focus:ring-indigo-200" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Nomor SPK / Surat Pesanan</label>
+                            <input type="text" id="noSpk" class="w-full mt-1 p-2 border rounded" value="07/SP/MEUBILER/PL/DAU/SD/2024" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Tanggal SPK</label>
+                            <input type="text" id="tglSpk" class="w-full mt-1 p-2 border rounded" value="16 Agustus 2024" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Nomor Lampiran BAP</label>
+                            <input type="text" id="noLampiranBap" class="w-full mt-1 p-2 border rounded" value="08.01. 83 /BA-P2BP/DISDIKPORA/2024">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Nomor BAPB (Penerimaan)</label>
+                            <input type="text" id="noBapb" class="w-full mt-1 p-2 border rounded" value="83 /027/DISDIKPORA-ASET/2024">
+                        </div>
+                    </div>
+
+                    <!-- Section Penyedia -->
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Penyedia (Rekanan)</h2>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Nama Perusahaan</label>
+                            <input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="CV. HARSITA KARYA MANDIRI" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium">Nama Direktur/Pimpinan</label>
+                            <input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="HAERUL AZIZ MANASSA" required>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Section Data Pejabat & Panitia -->
+                <div class="mt-6 bg-gray-50 p-4 rounded border">
+                    <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Pejabat & Panitia Pemeriksa</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-3 border-b border-gray-300 pb-1">Susunan Panitia</h3>
+                            <div class="mb-3"><label class="block text-sm font-medium">Ketua Panitia</label><input type="text" id="ketuaPanitia" class="w-full mt-1 p-2 border rounded" value="ALAM NUARI, S.Pd" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Anggota 1</label><input type="text" id="anggota1" class="w-full mt-1 p-2 border rounded" value="MA'RUF" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Anggota 2</label><input type="text" id="anggota2" class="w-full mt-1 p-2 border rounded" value="HIDAYAT" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Anggota 3</label><input type="text" id="anggota3" class="w-full mt-1 p-2 border rounded" value="NAMA ANGGOTA 3" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Anggota 4</label><input type="text" id="anggota4" class="w-full mt-1 p-2 border rounded" value="NAMA ANGGOTA 4" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Anggota 5</label><input type="text" id="anggota5" class="w-full mt-1 p-2 border rounded" value="NAMA ANGGOTA 5" required></div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-3 border-b border-gray-300 pb-1">Pihak Terkait Lainnya</h3>
+                            <div class="mb-3"><label class="block text-sm font-medium">Pengurus Barang</label><input type="text" id="pengurusBarang" class="w-full mt-1 p-2 border rounded" value="MA'RUF" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">NIP Pengurus Barang</label><input type="text" id="nipPengurusBarang" class="w-full mt-1 p-2 border rounded" value="19830626 201409 1 001" required></div>
+                            <div class="mb-3 mt-8"><label class="block text-sm font-medium">Kepala Dinas</label><input type="text" id="kepalaDinas" class="w-full mt-1 p-2 border rounded" value="H. KASMUDIN, SS. MM" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">Pangkat Kepala Dinas</label><input type="text" id="pangkatKepalaDinas" class="w-full mt-1 p-2 border rounded" value="Pembina Utama Muda/ IVc" required></div>
+                            <div class="mb-3"><label class="block text-sm font-medium">NIP Kepala Dinas</label><input type="text" id="nipKepalaDinas" class="w-full mt-1 p-2 border rounded" value="19670807 199302 1 003" required></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Barang -->
+                <div class="mt-6 bg-gray-50 p-4 rounded border">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="font-semibold text-lg">Daftar Barang</h2>
+                        <button type="button" onclick="tambahBarang()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">+ Tambah Barang</button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="tabelBarang">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="p-2 border">Uraian / Nama Barang</th>
+                                    <th class="p-2 border w-32">Merk/Type</th>
+                                    <th class="p-2 border w-24">Jumlah</th>
+                                    <th class="p-2 border w-32">Satuan</th>
+                                    <th class="p-2 border w-40">Harga Satuan (Rp)</th>
+                                    <th class="p-2 border w-40">Total Harga (Rp)</th>
+                                    <th class="p-2 border w-32">Kondisi</th>
+                                    <th class="p-2 border w-16">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyBarang">
+                                <!-- Baris Default -->
+                                <tr>
+                                    <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="LEMARI KAYU" required></td>
+                                    <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="-" required></td>
+                                    <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="6" oninput="hitungBaris(this)" required></td>
+                                    <td class="p-2 border">
+                                        <select class="w-full p-1 border rounded item-satuan" required>
+                                            <option value="BUAH" selected>Buah</option>
+                                            <option value="UNIT">Unit</option>
+                                            <option value="PCS">Pcs</option>
+                                            <option value="EKS">Eks</option>
+                                            <option value="LEMBAR">Lembar</option>
+                                            <option value="PAKET">Paket</option>
+                                            <option value="DOS">Dos</option>
+                                            <option value="PAK">Pak</option>
+                                            <option value="GROSIR">Grosir</option>
+                                            <option value="SET">Set</option>
+                                        </select>
+                                    </td>
+                                    <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="1200000" oninput="hitungBaris(this)" required></td>
+                                    <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-gray-100 item-total font-semibold text-right" value="7.200.000" readonly></td>
+                                    <td class="p-2 border">
+                                        <select class="w-full p-1 border rounded item-kondisi" required>
+                                            <option value="Baik" selected>Baik</option>
+                                            <option value="Rusak Ringan">Rusak Ringan</option>
+                                            <option value="Rusak Berat">Rusak Berat</option>
+                                        </select>
+                                    </td>
+                                    <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold">X</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Form -->
+                <div class="mt-8 flex flex-wrap gap-4 justify-center">
+                    <button type="button" onclick="siapkanCetak('BAP')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">
+                        🖨️ Cetak BAP
+                    </button>
+                    <button type="button" onclick="siapkanCetak('BAPB')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">
+                        🖨️ Cetak BAPB
+                    </button>
+                    <button type="button" onclick="simpanKeDatabase()" id="btnSimpan" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded shadow">
+                        💾 Simpan Data
+                    </button>
+                </div>
+                <p id="pesanStatus" class="text-center mt-3 font-semibold"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- AREA CETAK (Tersembunyi di web, muncul saat print) -->
+    <!-- ========================================================================= -->
+    <div id="print-area" class="hidden bg-white">
+        <!-- TEMPLATE BAP -->
+        <div id="template-BAP" class="print-page hidden">
+            <div class="text-center font-bold mb-4">
+                <p>PANITIA PEMERIKSA BARANG DAERAH KABUPATEN DONGGALA</p>
+                <p>KETERANGAN HASIL PEMERIKSAAN BARANG</p>
+            </div>
+            
+            <p class="text-justify indent-8 mb-4">
+                Pada hari ini <span class="font-bold print-terbilang-tanggal"></span>, kami masing-masing yang bertanda tangan di bawah ini berdasarkan Keputusan Kepala Dinas Pendidikan Pemuda dan Olahraga Kabupaten Donggala Tentang Penunjukan Panitia Pemeriksa Barang Pengguna Tahun 2024 Nomor : 419/P2BP/DISDIKPORA/2024 Tanggal 26 Februari 2024, telah melakukan Pemeriksaan Fisik Barang.
+            </p>
+            
+            <table class="w-full mb-4">
+                <tr><td class="w-6 align-top">→</td><td class="text-justify">Barang-barang yang diadakan untuk Pemerintah Kabupaten Donggala yang diadakan secara terpusat di masing-masing Unit Satuan Kerja Perangkat Daerah.</td></tr>
+                <tr><td class="w-6 align-top">→</td><td class="text-justify">Barang-barang yang diadakan/pekerjaan yang dikerjakan oleh Pemerintah Kabupaten Donggala baik yang dilaksanakan oleh unit/satuan kerja.</td></tr>
+                <tr><td class="w-6 align-top">→</td><td class="text-justify">Barang-barang lain untuk Pemerintah Kabupaten Donggala dan atau barang yang disalurkan ke unit/satuan kerja lainnya.</td></tr>
+                <tr><td class="w-6 align-top">→</td><td class="text-justify">Barang-barang persediaan yang berada dalam Gudang Pemerintah Kabupaten Donggala setelah ada kejadian.</td></tr>
+            </table>
+
+            <p class="mb-2">Yang diadakan/dikerjakan oleh Pejabat Pelaksana Teknis Kegiatan pada Dinas Pendidikan Pemuda dan Olahraga Kabupaten Donggala Tahun Anggaran 2024 berdasarkan :</p>
+            
+            <table class="w-full mb-4 ml-4">
+                <tr><td class="w-48">Nomor SPK/Surat Pesanan</td><td class="w-4">:</td><td class="print-no-spk font-bold"></td></tr>
+                <tr><td>Tanggal</td><td>:</td><td class="print-tgl-spk font-bold"></td></tr>
+                <tr><td>Penyedia</td><td>:</td><td class="print-perusahaan font-bold"></td></tr>
+            </table>
+
+            <p class="text-justify mb-4">
+                Barang yang BAIK kami beri tanda (P) yang selanjutnya akan diserahkan oleh Rekanan kepada Pejabat Pembuat Komitmen, sedang yang TIDAK BAIK kami beri tanda (x).
+            </p>
+            
+            <p class="mb-8">Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
+
+            <table class="w-full text-center mt-8">
+                <tr>
+                    <td class="w-1/3 align-top">PENYEDIA BARANG/JASA<br><span class="print-perusahaan font-bold"></span></td>
+                    <td class="w-1/3 align-top">KETUA<br>PANITIA PEMERIKSA BARANG</td>
+                    <td class="w-1/3 align-top">PANITIA PEMERIKSA<br>BARANG PENGGUNA</td>
+                </tr>
+                <tr><td colspan="3" class="h-16"></td></tr>
+                <tr>
+                    <td class="font-bold underline print-pimpinan align-top"></td>
+                    <td class="font-bold underline print-ketua-panitia align-top"></td>
+                    <td class="text-left pl-8 align-top">1. ANGGOTA<br><br><br><span class="print-anggota-1"></span></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td class="text-left pl-8 pt-4 align-top">2. ANGGOTA<br><br><br><span class="print-anggota-2"></span></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td class="text-left pl-8 pt-4 align-top">3. ANGGOTA<br><br><br><span class="print-anggota-3"></span></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td class="text-left pl-8 pt-4 align-top">4. ANGGOTA<br><br><br><span class="print-anggota-4"></span></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td class="text-left pl-8 pt-4 align-top">5. ANGGOTA<br><br><br><span class="print-anggota-5"></span></td>
+                </tr>
+            </table>
+
+            <!-- Lampiran BAP -->
+            <div style="page-break-before: always; padding-top: 2cm;">
+                <p class="font-bold">LAMPIRAN BERITA ACARA PEMERIKSAAN BARANG</p>
+                <p>Nomor : <span class="print-no-lampiran-bap"></span></p>
+                
+                <table class="print-table w-full mt-4">
+                    <thead>
+                        <tr>
+                            <th class="w-12">No.</th>
+                            <th>Uraian</th>
+                            <th>Merk/Type</th>
+                            <th>Jumlah<br>Pesanan</th>
+                            <th>Satuan</th>
+                            <th>Harga Satuan<br>(Rp)</th>
+                            <th>Jumlah Harga<br>(Rp)</th>
+                            <th>Kondisi / Ket</th>
+                        </tr>
+                    </thead>
+                    <tbody class="print-tbody-barang">
+                        <!-- Diisi otomatis via JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-right font-bold pr-4">TOTAL :</td>
+                            <td class="font-bold print-total-harga text-right"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- TEMPLATE BAPB -->
+        <div id="template-BAPB" class="print-page hidden">
+            <!-- Kop Surat -->
+            <div class="flex items-center justify-between mb-6 border-b-4 border-double border-black pb-3">
+                <div class="w-24 flex-shrink-0 flex justify-center">
+                    <img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" alt="Logo Donggala" class="w-20 h-auto">
+                </div>
+                <div class="flex-1 text-center font-bold px-2">
+                    <p class="text-lg">PEMERINTAH KABUPATEN DONGGALA</p>
+                    <p class="text-xl whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p>
+                    <p class="text-sm font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p>
+                </div>
+                <div class="w-24 flex-shrink-0"></div> 
+            </div>
+            
+            <div class="text-center font-bold mb-6 mt-4">
+                <p class="underline">BERITA ACARA PENERIMAAN BARANG</p>
+                <p class="font-normal">Nomor : <span class="print-no-bapb"></span></p>
+            </div>
+
+            <p class="text-justify indent-8 mb-4">
+                Pada hari ini <span class="font-bold print-terbilang-tanggal"></span>, kami yang bertanda tangan dibawah ini masing-masing :
+            </p>
+
+            <table class="w-full mb-4 ml-8">
+                <tr><td class="w-48">NAMA</td><td class="w-4">:</td><td class="font-bold print-pengurus-barang"></td></tr>
+                <tr><td>JABATAN</td><td>:</td><td>PENGURUS BARANG</td></tr>
+            </table>
+
+            <p class="text-justify mb-4">
+                Berdasarkan Keputusan Bupati Donggala Nomor 188.45/0170/BPKAD/II/2024 tanggal 20 Februari 2024 Tentang Penetapan Pejabat Pengelola Barang, Penatausahaan Barang Pengelola, Pengurus Barang Pengelola, Pembantu Pengurus Barang Pengelola, Pengurus Pengelola Barang Barang Pembantu, Pejabat Penatausahaan Pengguna Barang, Pengurus Barang Pengguna dan Pembantu Pengurus Barang Pengguna Barang Milik Daerah pada Perangkat Daerah Kabupaten Donggala Tahun 2024.
+            </p>
+
+            <p class="mb-4">Telah menerima barang yang diserahkan oleh :</p>
+
+            <table class="w-full mb-6 ml-8">
+                <tr><td class="w-48">NAMA</td><td class="w-4">:</td><td class="font-bold print-pimpinan"></td></tr>
+                <tr><td>JABATAN</td><td>:</td><td class="print-perusahaan"></td></tr>
+                <tr><td class="whitespace-nowrap">NO. SP/KONTRAK</td><td>:</td><td class="print-no-spk"></td></tr>
+            </table>
+
+            <table class="w-full text-center mt-12">
+                <tr>
+                    <td class="w-1/2 align-top">YANG MENYERAHKAN,<br>PENYEDIA / PENERIMA<br><span class="print-perusahaan font-bold"></span></td>
+                    <td class="w-1/2 align-top">YANG MENERIMA,<br>PENGURUS BARANG</td>
+                </tr>
+                <tr><td colspan="2" class="h-24"></td></tr>
+                <tr>
+                    <td class="font-bold underline print-pimpinan"></td>
+                    <td class="font-bold underline print-pengurus-barang"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Nip. <span class="print-nip-pengurus"></span></td>
+                </tr>
+            </table>
+
+            <div class="w-full text-center mt-12">
+                <p>MENGETAHUI</p>
+                <p>Kepala Dinas Pendidikan Pemuda dan Olahraga</p>
+                <p>Kabupaten Donggala</p>
+                <div class="h-24"></div>
+                <p class="font-bold underline print-kepala-dinas"></p>
+                <p class="print-pangkat-kepala"></p>
+                <p>Nip. <span class="print-nip-kepala"></span></p>
+            </div>
+
+            <!-- Lampiran BAPB -->
+            <div style="page-break-before: always; padding-top: 2cm;">
+                <div class="flex items-center justify-between mb-6 border-b-4 border-double border-black pb-3">
+                    <div class="w-24 flex-shrink-0 flex justify-center">
+                        <img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" alt="Logo Donggala" class="w-20 h-auto">
+                    </div>
+                    <div class="flex-1 text-center font-bold px-2">
+                        <p class="text-lg">PEMERINTAH KABUPATEN DONGGALA</p>
+                        <p class="text-xl whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p>
+                        <p class="text-sm font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p>
+                    </div>
+                    <div class="w-24 flex-shrink-0"></div> 
+                </div>
+
+                <p class="font-bold">LAMPIRAN BERITA ACARA PENERIMAAN BARANG</p>
+                <p>Nomor : <span class="print-no-bapb"></span></p>
+                
+                <table class="print-table w-full mt-4">
+                    <thead>
+                        <tr>
+                            <th class="w-12">No.</th>
+                            <th>Uraian</th>
+                            <th>Merk/Type</th>
+                            <th>Jumlah<br>Pesanan</th>
+                            <th>Satuan</th>
+                            <th>Harga Satuan<br>(Rp)</th>
+                            <th>Jumlah Harga<br>(Rp)</th>
+                            <th>Kondisi / Ket</th>
+                        </tr>
+                    </thead>
+                    <tbody class="print-tbody-barang">
+                        <!-- Diisi otomatis via JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-right font-bold pr-4">TOTAL :</td>
+                            <td class="font-bold print-total-harga text-right"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- JAVASCRIPT & LOGIKA APLIKASI -->
+    <!-- ========================================================================= -->
+    <script>
+        // ==============================================================================
+        // PASTE URL APPSCRIPT DISINI (Ganti teks di dalam tanda kutip dengan URL Anda)
+        // Contoh: const urlAppScript = "https://script.google.com/macros/s/AKfycb.../exec";
+        // ==============================================================================
+        const urlAppScript = "https://script.google.com/macros/s/AKfycbz0ZrvPXrELaWL3S3p1YkfauNlPN2EESCdJpDQBFrV6C3RoaUsxQ3oe-ZUBoblsTdsn/exec"; 
+
+        // Set tanggal form default
+        document.getElementById('tglDokumen').valueAsDate = new Date();
+
+        // Variabel Global
+        let myChart = null;
+        let dataGlobalTersimpan = [];
+
+        // 1. LOGIKA LOGIN ADMIN
+        function prosesLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            
+            // Password default sederhana
+            if(user === 'admin' && pass === 'admin123') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('app-section').classList.remove('hidden');
+                navigasi('dashboard');
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            if(confirm('Yakin ingin keluar?')) {
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('app-section').classList.add('hidden');
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                document.getElementById('loginError').classList.add('hidden');
+            }
+        }
+
+        // 2. LOGIKA NAVIGASI VIEW
+        function navigasi(view) {
+            const vDashboard = document.getElementById('view-dashboard');
+            const vForm = document.getElementById('view-form');
+            const nDashboard = document.getElementById('nav-dashboard');
+            const nForm = document.getElementById('nav-form');
+
+            if(view === 'dashboard') {
+                vDashboard.classList.remove('hidden');
+                vForm.classList.add('hidden');
+                nDashboard.classList.add('bg-indigo-800');
+                nForm.classList.remove('bg-indigo-800');
+            } else {
+                vDashboard.classList.add('hidden');
+                vForm.classList.remove('hidden');
+                nDashboard.classList.remove('bg-indigo-800');
+                nForm.classList.add('bg-indigo-800');
+            }
+        }
+
+        // 3. LOGIKA DASBOR & DATA
+        function ambilDataTersimpan() {
+            if(!urlAppScript || urlAppScript === "PASTE_URL_APPSCRIPT_DISINI") {
+                alert("Silakan buka kode HTML dan paste URL Web App Google Apps Script Anda pada variabel 'urlAppScript' di baris atas script!");
+                return;
+            }
+
+            const btn = document.getElementById('btnSync');
+            btn.innerText = "⏳ Sedang Sinkronisasi...";
+            btn.disabled = true;
+
+            fetch(urlAppScript, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'get' })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === 'success') {
+                    dataGlobalTersimpan = result.data.map(d => {
+                        // Coba parse total harga untuk keperluan tabel dan grafik
+                        let detailData = null;
+                        try { detailData = JSON.parse(d.fullDataJson); } catch(e){}
+                        d.parsedDetail = detailData;
+                        return d;
+                    });
+                    
+                    updateDasbor(dataGlobalTersimpan);
+                    alert("Data berhasil disinkronkan!");
+                } else {
+                    throw new Error(result.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Gagal memuat data. Pastikan URL Apps Script benar dan hak akses 'Siapa Saja'.");
+            })
+            .finally(() => {
+                btn.innerText = "🔄 Sinkronkan Data";
+                btn.disabled = false;
+            });
+        }
+
+        function updateDasbor(dataArray) {
+            // Update Summary Cards
+            const totalDoc = dataArray.length;
+            let totalNilai = 0;
+            const cvSet = new Set();
+            
+            // Rekap untuk Grafik (Total Nilai per CV)
+            const rekapCV = {};
+
+            dataArray.forEach(d => {
+                cvSet.add(d.namaPenyedia);
+                if(d.parsedDetail && d.parsedDetail.totalHarga) {
+                    const nilai = parseFloat(d.parsedDetail.totalHarga);
+                    totalNilai += nilai;
+                    rekapCV[d.namaPenyedia] = (rekapCV[d.namaPenyedia] || 0) + nilai;
+                }
+            });
+
+            document.getElementById('statTotalDoc').innerText = totalDoc;
+            document.getElementById('statTotalCV').innerText = cvSet.size;
+            document.getElementById('statTotalNilai').innerText = "Rp " + formatRp(totalNilai);
+
+            // Update Tabel
+            renderTabel(dataArray);
+
+            // Update Grafik Chart.js
+            renderGrafik(rekapCV);
+        }
+
+        function renderTabel(dataArray) {
+            const tbody = document.getElementById('tabelRiwayatBody');
+            tbody.innerHTML = '';
+
+            if(dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">Tidak ada data ditemukan.</td></tr>';
+                return;
+            }
+
+            dataArray.forEach((doc, index) => {
+                const tgl = new Date(doc.timestamp).toLocaleDateString('id-ID');
+                const nilai = doc.parsedDetail ? formatRp(doc.parsedDetail.totalHarga) : "0";
+                
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-indigo-50";
+                tr.innerHTML = `
+                    <td class="p-2 border-r">${tgl}</td>
+                    <td class="p-2 border-r">${doc.noSpk}</td>
+                    <td class="p-2 border-r">${doc.namaPenyedia}</td>
+                    <td class="p-2 border-r text-right">Rp ${nilai}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="loadDataKeForm(${index})" class="bg-indigo-500 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs font-bold">Muat & Cetak</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTabel() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filteredData = dataGlobalTersimpan.filter(d => {
+                return (d.noSpk && d.noSpk.toLowerCase().includes(query)) || 
+                       (d.namaPenyedia && d.namaPenyedia.toLowerCase().includes(query));
+            });
+            renderTabel(filteredData);
+        }
+
+        function renderGrafik(rekapCV) {
+            const ctx = document.getElementById('grafikCV').getContext('2d');
+            
+            // Hancurkan grafik lama jika ada
+            if(myChart != null) { myChart.destroy(); }
+
+            const labels = Object.keys(rekapCV);
+            const dataNilai = Object.values(rekapCV);
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Belum Ada Data'],
+                    datasets: [{
+                        label: 'Total Nilai Transaksi (Rp)',
+                        data: dataNilai.length > 0 ? dataNilai : [0],
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Memasukkan data tabel ke Form untuk dicetak kembali
+        function loadDataKeForm(index) {
+            const doc = dataGlobalTersimpan[index];
+            if (!doc || !doc.parsedDetail) {
+                alert("Data dokumen tidak lengkap untuk dimuat ulang.");
+                return;
+            }
+            const data = doc.parsedDetail;
+
+            document.getElementById('tglDokumen').value = data.tanggalDokumen || '';
+            document.getElementById('noSpk').value = data.noSpk || '';
+            document.getElementById('tglSpk').value = data.tanggalSpk || '';
+            document.getElementById('noLampiranBap').value = data.noLampiranBap || '';
+            document.getElementById('noBapb').value = data.noBapb || '';
+            document.getElementById('namaPerusahaan').value = data.namaPenyedia || '';
+            document.getElementById('namaPimpinan').value = data.namaDirektur || '';
+            document.getElementById('ketuaPanitia').value = data.ketuaPanitia || '';
+            document.getElementById('anggota1').value = data.anggota1 || '';
+            document.getElementById('anggota2').value = data.anggota2 || '';
+            document.getElementById('anggota3').value = data.anggota3 || '';
+            document.getElementById('anggota4').value = data.anggota4 || '';
+            document.getElementById('anggota5').value = data.anggota5 || '';
+            document.getElementById('pengurusBarang').value = data.pengurusBarang || '';
+            document.getElementById('nipPengurusBarang').value = data.nipPengurusBarang || '';
+            document.getElementById('kepalaDinas').value = data.kepalaDinas || '';
+            document.getElementById('pangkatKepalaDinas').value = data.pangkatKepalaDinas || '';
+            document.getElementById('nipKepalaDinas').value = data.nipKepalaDinas || '';
+
+            const tbody = document.getElementById('bodyBarang');
+            tbody.innerHTML = '';
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="${item.uraian}" required></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="${item.merk}" required></td>
+                        <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="${item.jumlah}" oninput="hitungBaris(this)" required></td>
+                        <td class="p-2 border">
+                            <select class="w-full p-1 border rounded item-satuan" required>
+                                <option value="BUAH" ${item.satuan === 'BUAH' ? 'selected' : ''}>Buah</option>
+                                <option value="UNIT" ${item.satuan === 'UNIT' ? 'selected' : ''}>Unit</option>
+                                <option value="PCS" ${item.satuan === 'PCS' ? 'selected' : ''}>Pcs</option>
+                                <option value="EKS" ${item.satuan === 'EKS' ? 'selected' : ''}>Eks</option>
+                                <option value="LEMBAR" ${item.satuan === 'LEMBAR' ? 'selected' : ''}>Lembar</option>
+                                <option value="PAKET" ${item.satuan === 'PAKET' ? 'selected' : ''}>Paket</option>
+                                <option value="DOS" ${item.satuan === 'DOS' ? 'selected' : ''}>Dos</option>
+                                <option value="PAK" ${item.satuan === 'PAK' ? 'selected' : ''}>Pak</option>
+                                <option value="GROSIR" ${item.satuan === 'GROSIR' ? 'selected' : ''}>Grosir</option>
+                                <option value="SET" ${item.satuan === 'SET' ? 'selected' : ''}>Set</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="${item.harga}" oninput="hitungBaris(this)" required></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-gray-100 item-total font-semibold text-right" value="${formatRp(item.total)}" readonly></td>
+                        <td class="p-2 border">
+                            <select class="w-full p-1 border rounded item-kondisi" required>
+                                <option value="Baik" ${item.kondisi === 'Baik' ? 'selected' : ''}>Baik</option>
+                                <option value="Rusak Ringan" ${item.kondisi === 'Rusak Ringan' ? 'selected' : ''}>Rusak Ringan</option>
+                                <option value="Rusak Berat" ${item.kondisi === 'Rusak Berat' ? 'selected' : ''}>Rusak Berat</option>
+                            </select>
+                        </td>
+                        <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold">X</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tambahBarang();
+            }
+
+            // Arahkan ke Form View
+            navigasi('form');
+            alert("Data berhasil dimuat ke Form! Anda sekarang dapat mengubahnya atau langsung mencetaknya.");
+        }
+
+
+        // 4. LOGIKA FORMULAR DAN CETAK (Sama seperti sebelumnya)
+        const formatRp = (angka) => { return new Intl.NumberFormat('id-ID').format(angka); };
+
+        function hitungBaris(el) {
+            const tr = el.closest('tr');
+            const jumlah = parseFloat(tr.querySelector('.item-jumlah').value) || 0;
+            const harga = parseFloat(tr.querySelector('.item-harga').value) || 0;
+            tr.querySelector('.item-total').value = formatRp(jumlah * harga);
+        }
+
+        function tambahBarang() {
+            const tbody = document.getElementById('bodyBarang');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" required></td>
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="-" required></td>
+                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="1" oninput="hitungBaris(this)" required></td>
+                <td class="p-2 border">
+                    <select class="w-full p-1 border rounded item-satuan" required>
+                        <option value="BUAH" selected>Buah</option>
+                        <option value="UNIT">Unit</option>
+                        <option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option>
+                        <option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option>
+                        <option value="GROSIR">Grosir</option><option value="SET">Set</option>
+                    </select>
+                </td>
+                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="0" oninput="hitungBaris(this)" required></td>
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-gray-100 item-total font-semibold text-right" value="0" readonly></td>
+                <td class="p-2 border">
+                    <select class="w-full p-1 border rounded item-kondisi" required>
+                        <option value="Baik" selected>Baik</option>
+                        <option value="Rusak Ringan">Rusak Ringan</option>
+                        <option value="Rusak Berat">Rusak Berat</option>
+                    </select>
+                </td>
+                <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function hapusBaris(btn) { btn.closest('tr').remove(); }
+
+        function angkaKeHuruf(angka) {
+            const huruf = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+            if (angka < 12) return huruf[angka];
+            if (angka < 20) return huruf[angka - 10] + " Belas";
+            if (angka < 100) return huruf[Math.floor(angka / 10)] + " Puluh " + huruf[angka % 10];
+            if (angka === 2024) return "Dua Ribu Dua Puluh Empat";
+            if (angka === 2025) return "Dua Ribu Dua Puluh Lima";
+            if (angka === 2026) return "Dua Ribu Dua Puluh Enam";
+            return angka.toString();
+        }
+
+        function formatTerbilangTanggal(dateString) {
+            if (!dateString) return "...";
+            const date = new Date(dateString);
+            const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][date.getDay()];
+            const bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][date.getMonth()];
+            return `${hari} Tanggal ${angkaKeHuruf(date.getDate())} Bulan ${bulan} Tahun ${angkaKeHuruf(date.getFullYear())}`;
+        }
+
+        function kumpulkanData() {
+            const items = [];
+            let totalSemua = 0;
+            document.querySelectorAll('#bodyBarang tr').forEach(row => {
+                const uraian = row.querySelector('.item-uraian').value;
+                const merk = row.querySelector('.item-merk').value;
+                const jumlah = parseInt(row.querySelector('.item-jumlah').value) || 0;
+                const satuan = row.querySelector('.item-satuan').value;
+                const harga = parseFloat(row.querySelector('.item-harga').value) || 0;
+                const total = jumlah * harga;
+                const kondisi = row.querySelector('.item-kondisi').value;
+                totalSemua += total;
+                items.push({ uraian, merk, jumlah, satuan, harga, total, kondisi });
+            });
+
+            return {
+                tanggalDokumen: document.getElementById('tglDokumen').value,
+                noSpk: document.getElementById('noSpk').value,
+                tanggalSpk: document.getElementById('tglSpk').value,
+                noLampiranBap: document.getElementById('noLampiranBap').value,
+                noBapb: document.getElementById('noBapb').value,
+                namaPenyedia: document.getElementById('namaPerusahaan').value,
+                namaDirektur: document.getElementById('namaPimpinan').value,
+                ketuaPanitia: document.getElementById('ketuaPanitia').value,
+                anggota1: document.getElementById('anggota1').value,
+                anggota2: document.getElementById('anggota2').value,
+                anggota3: document.getElementById('anggota3').value,
+                anggota4: document.getElementById('anggota4').value,
+                anggota5: document.getElementById('anggota5').value,
+                pengurusBarang: document.getElementById('pengurusBarang').value,
+                nipPengurusBarang: document.getElementById('nipPengurusBarang').value,
+                kepalaDinas: document.getElementById('kepalaDinas').value,
+                pangkatKepalaDinas: document.getElementById('pangkatKepalaDinas').value,
+                nipKepalaDinas: document.getElementById('nipKepalaDinas').value,
+                items: items,
+                totalHarga: totalSemua
+            };
+        }
+
+        function siapkanCetak(jenis) {
+            if(!document.getElementById('mainForm').checkValidity()) {
+                alert("Harap lengkapi semua input data terlebih dahulu."); return;
+            }
+
+            const data = kumpulkanData();
+            const tglTerbilang = formatTerbilangTanggal(data.tanggalDokumen);
+
+            document.querySelectorAll('.print-terbilang-tanggal').forEach(el => el.innerText = tglTerbilang);
+            document.querySelectorAll('.print-no-spk').forEach(el => el.innerText = data.noSpk);
+            document.querySelectorAll('.print-tgl-spk').forEach(el => el.innerText = data.tanggalSpk);
+            document.querySelectorAll('.print-perusahaan').forEach(el => el.innerText = data.namaPenyedia);
+            document.querySelectorAll('.print-pimpinan').forEach(el => el.innerText = data.namaDirektur);
+            document.querySelectorAll('.print-no-lampiran-bap').forEach(el => el.innerText = data.noLampiranBap);
+            document.querySelectorAll('.print-no-bapb').forEach(el => el.innerText = data.noBapb);
+            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(data.totalHarga));
+            document.querySelectorAll('.print-ketua-panitia').forEach(el => el.innerText = data.ketuaPanitia);
+            document.querySelectorAll('.print-anggota-1').forEach(el => el.innerText = data.anggota1);
+            document.querySelectorAll('.print-anggota-2').forEach(el => el.innerText = data.anggota2);
+            document.querySelectorAll('.print-anggota-3').forEach(el => el.innerText = data.anggota3);
+            document.querySelectorAll('.print-anggota-4').forEach(el => el.innerText = data.anggota4);
+            document.querySelectorAll('.print-anggota-5').forEach(el => el.innerText = data.anggota5);
+            document.querySelectorAll('.print-pengurus-barang').forEach(el => el.innerText = data.pengurusBarang);
+            document.querySelectorAll('.print-nip-pengurus').forEach(el => el.innerText = data.nipPengurusBarang);
+            document.querySelectorAll('.print-kepala-dinas').forEach(el => el.innerText = data.kepalaDinas);
+            document.querySelectorAll('.print-pangkat-kepala').forEach(el => el.innerText = data.pangkatKepalaDinas);
+            document.querySelectorAll('.print-nip-kepala').forEach(el => el.innerText = data.nipKepalaDinas);
+
+            let htmlBarang = '';
+            data.items.forEach((item, index) => {
+                htmlBarang += `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td>${item.uraian}</td>
+                        <td class="text-center">${item.merk}</td>
+                        <td class="text-center">${item.jumlah}</td>
+                        <td class="text-center">${item.satuan}</td>
+                        <td class="text-right">${formatRp(item.harga)}</td>
+                        <td class="text-right">${formatRp(item.total)}</td>
+                        <td class="text-center">${item.kondisi}</td>
+                    </tr>`;
+            });
+            document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
+
+            document.getElementById('print-area').classList.remove('hidden');
+            document.getElementById('template-BAP').classList.add('hidden');
+            document.getElementById('template-BAPB').classList.add('hidden');
+
+            if(jenis === 'BAP') document.getElementById('template-BAP').classList.remove('hidden');
+            if(jenis === 'BAPB') document.getElementById('template-BAPB').classList.remove('hidden');
+
+            window.print();
+            setTimeout(() => { document.getElementById('print-area').classList.add('hidden'); }, 1000);
+        }
+
+        function simpanKeDatabase() {
+            if(!document.getElementById('mainForm').checkValidity()) {
+                alert("Harap lengkapi form sebelum menyimpan."); return;
+            }
+            if(!urlAppScript || urlAppScript === "PASTE_URL_APPSCRIPT_DISINI") {
+                alert("Silakan buka kode HTML dan paste URL Web App Google Apps Script Anda pada variabel 'urlAppScript' di bagian bawah!");
+                return;
+            }
+
+            const data = kumpulkanData();
+            const btn = document.getElementById('btnSimpan');
+            const pesan = document.getElementById('pesanStatus');
+            btn.innerText = "⏳ Menyimpan..."; btn.disabled = true;
+
+            fetch(urlAppScript, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "save", data: data }) 
+            })
+            .then(response => response.json())
+            .then(result => {
+                if(result.status === 'success') {
+                    pesan.innerText = result.message;
+                    pesan.className = "text-center mt-3 font-semibold text-green-600";
+                    alert("Data Berhasil Disimpan ke Spreadsheet!");
+                    ambilDataTersimpan(); // Auto refresh tabel dasbor
+                } else { throw new Error(result.message); }
+            })
+            .catch(error => {
+                pesan.innerText = "Gagal menyimpan: Cek kembali URL Anda.";
+                pesan.className = "text-center mt-3 font-semibold text-red-600";
+                alert("Gagal menyimpan data. Pastikan URL Apps Script benar.");
+            })
+            .finally(() => {
+                btn.innerText = "💾 Simpan Data"; btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
