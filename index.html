@@ -8,13 +8,27 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @media print {
+            /* Pengaturan orientasi kertas default (Portrait) */
+            @page { size: A4 portrait; margin: 1.5cm; }
+            
+            /* Pengaturan orientasi khusus halaman Lampiran (Landscape) */
+            @page landscape_page { size: A4 landscape; margin: 1.5cm; }
+            .halaman-landscape { page: landscape_page; width: 100%; }
+
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: black; }
             .no-print { display: none !important; }
-            .print-page { page-break-after: always; padding: 2cm; }
-            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            .print-table th, .print-table td { border: 1px solid black; padding: 5px; }
+            .print-page { page-break-after: always; }
+            
+            /* --- PERBAIKAN: Mencegah tabel dan baris terpotong ke halaman baru --- */
+            table { page-break-inside: auto; }
+            tr, tfoot { page-break-inside: avoid; page-break-after: auto; }
+            .hindari-terpotong { page-break-inside: avoid; }
+            /* ---------------------------------------------------------------------- */
+
+            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt; } 
+            .print-table th, .print-table td { border: 1px solid black; padding: 6px; }
             .print-table th { text-align: center; font-weight: bold; }
             .text-center { text-align: center; }
             .font-bold { font-weight: bold; }
@@ -46,7 +60,7 @@
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-3">
                         <img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" class="w-8 h-8 bg-white rounded-full p-0.5">
-                        <span class="font-bold text-lg hidden sm:block">BAP & BAPB Donggala</span>
+                        <span class="font-bold text-lg hidden sm:block">BAP & BAST Donggala</span>
                     </div>
                     <div class="flex space-x-4">
                         <button onclick="navigasi('dashboard')" id="nav-dashboard" class="bg-indigo-800 px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Dasbor & Data</button>
@@ -86,7 +100,7 @@
                                     <th class="p-2 border">Tanggal Input</th>
                                     <th class="p-2 border">No. SPK / Kontrak</th>
                                     <th class="p-2 border">Nama Perusahaan</th>
-                                    <th class="p-2 border">Total Harga</th>
+                                    <th class="p-2 border">Total Harga (Inc. PPN)</th>
                                     <th class="p-2 border text-center w-48">Aksi</th>
                                 </tr>
                             </thead>
@@ -100,23 +114,23 @@
         </div>
 
         <div id="view-form" class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-lg hidden mt-6 pb-12 mb-12">
-            <h1 id="judulForm" class="text-2xl font-bold mb-6 text-center text-gray-800 border-b pb-4">Formulir BAP & BAPB Baru</h1>
+            <h1 id="judulForm" class="text-2xl font-bold mb-6 text-center text-gray-800 border-b pb-4">Formulir BAP & BAST Baru</h1>
             
             <form id="mainForm" onsubmit="event.preventDefault();">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-gray-50 p-4 rounded border">
                         <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Dokumen & Kontrak</h2>
-                        <div class="mb-3"><label class="block text-sm font-medium">Tanggal Dokumen (BAP & BAPB)</label><input type="date" id="tglDokumen" class="w-full mt-1 p-2 border rounded" required></div>
+                        <div class="mb-3"><label class="block text-sm font-medium">Tanggal Dokumen</label><input type="date" id="tglDokumen" class="w-full mt-1 p-2 border rounded" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Nomor SPK / Surat Pesanan</label><input type="text" id="noSpk" class="w-full mt-1 p-2 border rounded" value="07/SP/MEUBILER/PL/DAU/SD/2026" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Tanggal SPK</label><input type="text" id="tglSpk" class="w-full mt-1 p-2 border rounded" value="16 Agustus 2026" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Nomor Lampiran BAP</label><input type="text" id="noLampiranBap" class="w-full mt-1 p-2 border rounded" value="08.01. 83 /BA-P2BP/DISDIKPORA/2026"></div>
-                        <div class="mb-3"><label class="block text-sm font-medium">Nomor BAPB (Penerimaan)</label><input type="text" id="noBapb" class="w-full mt-1 p-2 border rounded" value="83 /027/DISDIKPORA-ASET/2026"></div>
+                        <div class="mb-3"><label class="block text-sm font-medium">Nomor BAST (Serah Terima)</label><input type="text" id="noBapb" class="w-full mt-1 p-2 border rounded" value="83 /027/DISDIKPORA-ASET/2026"></div>
                     </div>
 
                     <div class="bg-gray-50 p-4 rounded border">
                         <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Penyedia (Rekanan)</h2>
-                        <div class="mb-3"><label class="block text-sm font-medium">Nama Perusahaan</label><input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="CV. HARSITA KARYA MANDIRI" required></div>
-                        <div class="mb-3"><label class="block text-sm font-medium">Nama Direktur/Pimpinan</label><input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="HAERUL AZIZ MANASSA" required></div>
+                        <div class="mb-3"><label class="block text-sm font-medium">Nama Perusahaan</label><input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="CV. SEANA STORE" required></div>
+                        <div class="mb-3"><label class="block text-sm font-medium">Nama Direktur/Pimpinan</label><input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="ADELIA PUTRI" required></div>
                     </div>
                 </div>
 
@@ -145,7 +159,7 @@
 
                 <div class="mt-6 bg-gray-50 p-4 rounded border">
                     <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h2 class="font-semibold text-lg">Daftar Barang</h2>
+                        <h2 class="font-semibold text-lg">Daftar Barang & Perhitungan Harga</h2>
                         <button type="button" onclick="tambahBarang()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">+ Tambah Barang</button>
                     </div>
                     
@@ -154,14 +168,15 @@
                             <thead>
                                 <tr class="bg-gray-200">
                                     <th class="p-2 border">Uraian / Nama Barang</th>
-                                    <th class="p-2 border w-32">Merk/Type</th>
-                                    <th class="p-2 border w-24">Jumlah</th>
-                                    <th class="p-2 border w-32">Satuan</th>
-                                    <th class="p-2 border w-40">Harga Satuan (Rp)</th>
-                                    <th class="p-2 border w-40">Total Harga (Rp)</th>
-                                    <th class="p-2 border w-36">Foto Barang</th> 
-                                    <th class="p-2 border w-32">Kondisi</th>
-                                    <th class="p-2 border w-16">Aksi</th>
+                                    <th class="p-2 border w-24">Merk/Type</th>
+                                    <th class="p-2 border w-20">Jumlah</th>
+                                    <th class="p-2 border w-28">Satuan</th>
+                                    <th class="p-2 border w-36">Harga Dasar (Rp)</th>
+                                    <th class="p-2 border w-16 text-center">+PPN 11%</th>
+                                    <th class="p-2 border w-36">Total Harga (Rp)</th>
+                                    <th class="p-2 border w-32">Foto Barang</th> 
+                                    <th class="p-2 border w-28">Kondisi</th>
+                                    <th class="p-2 border w-12">Hapus</th>
                                 </tr>
                             </thead>
                             <tbody id="bodyBarang"></tbody>
@@ -171,7 +186,7 @@
 
                 <div class="mt-8 flex flex-wrap gap-4 justify-center">
                     <button type="button" onclick="siapkanCetak('BAP')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">🖨️ Cetak BAP</button>
-                    <button type="button" onclick="siapkanCetak('BAPB')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">🖨️ Cetak BAPB</button>
+                    <button type="button" onclick="siapkanCetak('BAST')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">🖨️ Cetak BAST</button>
                     <button type="button" onclick="simpanKeDatabase()" id="btnSimpan" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded shadow">💾 Simpan Data Baru</button>
                 </div>
                 <p id="pesanStatus" class="text-center mt-3 font-semibold"></p>
@@ -180,7 +195,10 @@
     </div>
 
     <div id="print-area" class="hidden bg-white">
+        
+        <!-- ======================= TEMPLATE BAP ======================= -->
         <div id="template-BAP" class="print-page hidden">
+            <!-- Halaman Utama BAP -->
             <div class="text-center font-bold mb-4">
                 <p>PANITIA PEMERIKSA BARANG DAERAH KABUPATEN DONGGALA</p>
                 <p>KETERANGAN HASIL PEMERIKSAAN BARANG</p>
@@ -200,7 +218,9 @@
             </table>
             <p class="text-justify mb-4">Barang yang BAIK kami beri tanda (V) yang selanjutnya akan diserahkan oleh Rekanan kepada Pejabat Pembuat Komitmen, sedang yang TIDAK BAIK kami beri tanda (x).</p>
             <p class="mb-8">Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
-            <table class="w-full text-center mt-8">
+            
+            <!-- Ditambahkan kelas hindari-terpotong untuk tabel TTD -->
+            <table class="w-full text-center mt-8 hindari-terpotong">
                 <tr><td class="w-1/3 align-top">PENYEDIA BARANG/JASA<br><span class="print-perusahaan font-bold"></span></td><td class="w-1/3 align-top">KETUA<br>PANITIA PEMERIKSA BARANG</td><td class="w-1/3 align-top">PANITIA PEMERIKSA<br>BARANG PENGGUNA</td></tr>
                 <tr><td colspan="3" class="h-16"></td></tr>
                 <tr><td class="font-bold underline print-pimpinan align-top"></td><td class="font-bold underline print-ketua-panitia align-top"></td><td class="text-left pl-8 align-top">1. ANGGOTA<br><br><br><span class="print-anggota-1"></span></td></tr>
@@ -210,15 +230,39 @@
                 <tr><td></td><td></td><td class="text-left pl-8 pt-4 align-top">5. ANGGOTA<br><br><br><span class="print-anggota-5"></span></td></tr>
             </table>
 
-            <div style="page-break-before: always; padding-top: 2cm;">
+            <!-- Lampiran Tabel BAP -->
+            <div class="halaman-landscape" style="page-break-before: always; padding-top: 1cm;">
                 <p class="font-bold">LAMPIRAN BERITA ACARA PEMERIKSAAN BARANG</p>
                 <p>Nomor : <span class="print-no-lampiran-bap"></span></p>
                 <table class="print-table w-full mt-4">
-                    <thead><tr><th class="w-12">No.</th><th>Uraian</th><th>Merk/Type</th><th>Jumlah<br>Pesanan</th><th>Satuan</th><th>Harga Satuan<br>(Rp)</th><th>Jumlah Harga<br>(Rp)</th><th class="w-24">Foto</th><th>Kondisi / Ket</th></tr></thead>
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="w-10">No.</th>
+                            <th>Uraian</th>
+                            <th>Merk/Type</th>
+                            <th>Jml</th>
+                            <th>Satuan</th>
+                            <th>Harga Dasar<br>(Rp)</th>
+                            <th>PPN 11%<br>(Rp)</th>
+                            <th>Total Harga<br>(Rp)</th>
+                            <th>Kondisi</th>
+                        </tr>
+                    </thead>
                     <tbody class="print-tbody-barang"></tbody>
-                    <tfoot><tr><td colspan="6" class="text-right font-bold pr-4">TOTAL :</td><td class="font-bold print-total-harga text-right"></td><td></td><td></td></tr></tfoot>
+                    <tfoot>
+                        <!-- Footer dengan Jumlah Keseluruhan -->
+                        <tr class="font-bold">
+                            <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
+                            <td class="text-center print-total-jumlah text-indigo-700"></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right print-total-ppn text-indigo-700"></td>
+                            <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
-                <table class="w-full text-center mt-12">
+                <table class="w-full text-center mt-12 hindari-terpotong">
                     <tr><td class="w-1/2 align-top">PENYEDIA BARANG/JASA<br><span class="print-perusahaan font-bold"></span></td><td class="w-1/2 align-top">KETUA PANITIA PEMERIKSA BARANG</td></tr>
                     <tr><td colspan="2" class="h-24"></td></tr>
                     <tr><td class="font-bold underline print-pimpinan"></td><td class="font-bold underline print-ketua-panitia"></td></tr>
@@ -226,39 +270,73 @@
             </div>
         </div>
 
-        <div id="template-BAPB" class="print-page hidden">
-            <div class="flex items-center justify-between mb-6 border-b-4 border-double border-black pb-3">
+        <!-- ======================= TEMPLATE BAST ======================= -->
+        <div id="template-BAST" class="print-page hidden">
+            <!-- Halaman Utama BAST -->
+            <div class="flex items-center justify-between mb-2 border-b-[3px] border-black pb-3 pt-4">
                 <div class="w-24 flex-shrink-0 flex justify-center"><img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" class="w-20 h-auto"></div>
-                <div class="flex-1 text-center font-bold px-2"><p class="text-lg">PEMERINTAH KABUPATEN DONGGALA</p><p class="text-xl whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p><p class="text-sm font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p></div>
+                <div class="flex-1 text-center font-bold px-2">
+                    <p class="text-lg">PEMERINTAH KABUPATEN DONGGALA</p>
+                    <p class="text-xl whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p>
+                    <p class="text-sm font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p>
+                </div>
                 <div class="w-24 flex-shrink-0"></div> 
             </div>
-            <div class="text-center font-bold mb-6 mt-4"><p class="underline">BERITA ACARA PENERIMAAN BARANG</p><p class="font-normal">Nomor : <span class="print-no-bapb"></span></p></div>
+            <!-- Perbaikan Underline Judul BAST -->
+            <div class="text-center font-bold mb-6 mt-6">
+                <h2 class="text-xl underline decoration-2 mb-1" style="text-underline-offset: 4px;">BERITA ACARA SERAH TERIMA BARANG</h2>
+                <p class="font-normal text-md mt-2">Nomor : <span class="print-no-bapb"></span></p>
+            </div>
             <p class="text-justify indent-8 mb-4">Pada hari ini <span class="font-bold print-terbilang-tanggal"></span>, kami yang bertanda tangan dibawah ini masing-masing :</p>
             <table class="w-full mb-4 ml-8"><tr><td class="w-48">NAMA</td><td class="w-4">:</td><td class="font-bold print-pengurus-barang"></td></tr><tr><td>JABATAN</td><td>:</td><td>PENGURUS BARANG</td></tr></table>
             <p class="text-justify mb-4">Berdasarkan Keputusan Bupati Donggala Nomor 188.45/0170/BPKAD/II/2026 tanggal 20 Februari 2026 Tentang Penetapan Pejabat Pengelola Barang, Penatausahaan Barang Pengelola, Pengurus Barang Pengelola, Pembantu Pengurus Barang Pengelola, Pengurus Pengelola Barang Barang Pembantu, Pejabat Penatausahaan Pengguna Barang, Pengurus Barang Pengguna dan Pembantu Pengurus Barang Pengguna Barang Milik Daerah pada Perangkat Daerah Kabupaten Donggala Tahun 2026.</p>
             <p class="mb-4">Telah menerima barang yang diserahkan oleh :</p>
             <table class="w-full mb-6 ml-8"><tr><td class="w-48">NAMA</td><td class="w-4">:</td><td class="font-bold print-pimpinan"></td></tr><tr><td>JABATAN</td><td>:</td><td class="print-perusahaan"></td></tr><tr><td class="whitespace-nowrap">NO. SP/KONTRAK</td><td>:</td><td class="print-no-spk"></td></tr></table>
-            <table class="w-full text-center mt-12">
+            <table class="w-full text-center mt-12 hindari-terpotong">
                 <tr><td class="w-1/2 align-top">YANG MENYERAHKAN,<br>PENYEDIA<br><span class="print-perusahaan font-bold"></span></td><td class="w-1/2 align-top">YANG MENERIMA,<br>PENGURUS BARANG</td></tr>
                 <tr><td colspan="2" class="h-24"></td></tr>
                 <tr><td class="font-bold underline print-pimpinan"></td><td class="font-bold underline print-pengurus-barang"></td></tr>
                 <tr><td></td><td>Nip. <span class="print-nip-pengurus"></span></td></tr>
             </table>
-            <div class="w-full text-center mt-12"><p>Mengetahui/Menyetujui</p><p>Kuasa Pengguna Anggaran</p><p></p><div class="h-24"></div><p class="font-bold underline print-kepala-dinas"></p><p class="print-pangkat-kepala"></p><p>Nip. <span class="print-nip-kepala"></span></p></div>
+            <div class="w-full text-center mt-12 hindari-terpotong"><p>Mengetahui/Menyetujui</p><p>Kuasa Pengguna Anggaran</p><p></p><div class="h-24"></div><p class="font-bold underline print-kepala-dinas"></p><p class="print-pangkat-kepala"></p><p>Nip. <span class="print-nip-kepala"></span></p></div>
 
-            <div style="page-break-before: always; padding-top: 2cm;">
-                <div class="flex items-center justify-between mb-6 border-b-4 border-double border-black pb-3">
-                    <div class="w-24 flex-shrink-0 flex justify-center"><img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" class="w-20 h-auto"></div>
-                    <div class="flex-1 text-center font-bold px-2"><p class="text-lg">PEMERINTAH KABUPATEN DONGGALA</p><p class="text-xl whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p><p class="text-sm font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p></div>
+            <!-- Lampiran Tabel BAST -->
+            <div class="halaman-landscape" style="page-break-before: always; padding-top: 1cm;">
+                <div class="flex items-center justify-between mb-4 border-b-2 border-black pb-3 pt-2">
+                    <div class="w-24 flex-shrink-0 flex justify-center"><img src="https://i.ibb.co.com/PvMLX0M3/Logo-Donggala.png" class="w-16 h-auto"></div>
+                    <div class="flex-1 text-center font-bold px-2"><p class="text-base">PEMERINTAH KABUPATEN DONGGALA</p><p class="text-lg whitespace-nowrap">DINAS PENDIDIKAN PEMUDA DAN OLAHRAGA</p><p class="text-xs font-normal">Alamat: Jalan Jati Gunung Bale Telp. (0457) 71775 - 71885 Donggala</p></div>
                     <div class="w-24 flex-shrink-0"></div> 
                 </div>
-                <p class="font-bold">LAMPIRAN BERITA ACARA PENERIMAAN BARANG</p><p>Nomor : <span class="print-no-bapb"></span></p>
+                <p class="font-bold">LAMPIRAN BERITA ACARA SERAH TERIMA BARANG</p><p>Nomor : <span class="print-no-bapb"></span></p>
                 <table class="print-table w-full mt-4">
-                    <thead><tr><th class="w-12">No.</th><th>Uraian</th><th>Merk/Type</th><th>Jumlah<br>Pesanan</th><th>Satuan</th><th>Harga Satuan<br>(Rp)</th><th>Jumlah Harga<br>(Rp)</th><th class="w-24">Foto</th><th>Kondisi / Ket</th></tr></thead>
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="w-10">No.</th>
+                            <th>Uraian</th>
+                            <th>Merk/Type</th>
+                            <th>Jml</th>
+                            <th>Satuan</th>
+                            <th>Harga Dasar<br>(Rp)</th>
+                            <th>PPN 11%<br>(Rp)</th>
+                            <th>Total Harga<br>(Rp)</th>
+                            <th>Kondisi</th>
+                        </tr>
+                    </thead>
                     <tbody class="print-tbody-barang"></tbody>
-                    <tfoot><tr><td colspan="6" class="text-right font-bold pr-4">TOTAL :</td><td class="font-bold print-total-harga text-right"></td><td></td><td></td></tr></tfoot>
+                    <tfoot>
+                        <!-- Footer dengan Jumlah Keseluruhan -->
+                        <tr class="font-bold">
+                            <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
+                            <td class="text-center print-total-jumlah text-indigo-700"></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right print-total-ppn text-indigo-700"></td>
+                            <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
-                <table class="w-full text-center mt-12">
+                <table class="w-full text-center mt-12 hindari-terpotong">
                     <tr><td class="w-1/2 align-top">YANG MENYERAHKAN,<br>PENYEDIA<br><span class="print-perusahaan font-bold"></span></td><td class="w-1/2 align-top">YANG MENERIMA,<br>PENGURUS BARANG</td></tr>
                     <tr><td colspan="2" class="h-24"></td></tr>
                     <tr><td class="font-bold underline print-pimpinan"></td><td class="font-bold underline print-pengurus-barang"></td></tr>
@@ -266,6 +344,10 @@
                 </table>
             </div>
         </div>
+
+        <!-- ======================= TEMPLATE LAMPIRAN FOTO ======================= -->
+        <div id="print-foto-container"></div>
+
     </div>
 
     <script>
@@ -275,9 +357,8 @@
 
         let myChart = null;
         let dataGlobalTersimpan = [];
-        let editTimestampId = null; // Penanda untuk membedakan Mode Edit atau Input Baru
+        let editTimestampId = null; 
 
-        // Jalankan saat pertama kali masuk form (agar tabel tidak kosong)
         tambahBarang();
         document.getElementById('tglDokumen').valueAsDate = new Date();
 
@@ -310,8 +391,8 @@
         }
 
         function bukaFormBaru() {
-            editTimestampId = null; // Reset penanda edit
-            document.getElementById('judulForm').innerText = "Formulir BAP & BAPB Baru";
+            editTimestampId = null; 
+            document.getElementById('judulForm').innerText = "Formulir BAP & BAST Baru";
             document.getElementById('btnSimpan').innerText = "💾 Simpan Data Baru";
             document.getElementById('btnSimpan').classList.replace('bg-orange-600', 'bg-teal-600');
             document.getElementById('btnSimpan').classList.replace('hover:bg-orange-700', 'hover:bg-teal-700');
@@ -384,12 +465,11 @@
                 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-indigo-50";
-                // PERUBAHAN: Menambahkan 3 tombol dalam 1 sel (Cetak, Edit, Hapus)
                 tr.innerHTML = `
                     <td class="p-2 border-r">${tgl}</td>
                     <td class="p-2 border-r">${doc.noSpk}</td>
                     <td class="p-2 border-r">${doc.namaPenyedia}</td>
-                    <td class="p-2 border-r text-right">Rp ${nilai}</td>
+                    <td class="p-2 border-r text-right font-bold text-indigo-700">Rp ${nilai}</td>
                     <td class="p-2 text-center">
                         <div class="flex justify-center gap-1 flex-wrap">
                             <button onclick="lihatCetakData(${index})" class="bg-indigo-500 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs font-bold">Cetak</button>
@@ -421,7 +501,6 @@
             });
         }
 
-        // FUNGSI UNTUK MENGISI FORM (Dipakai untuk Cetak dan Edit)
         function isiFormDenganData(index) {
             const doc = dataGlobalTersimpan[index];
             if (!doc || !doc.parsedDetail) { alert("Data dokumen tidak lengkap."); return false; }
@@ -453,20 +532,23 @@
                     const tr = document.createElement('tr');
                     tr.dataset.fotoBase64 = item.foto || ""; 
                     const isHidden = item.foto ? "" : "hidden";
+                    const isChecked = item.isPpn !== false ? "checked" : "";
+                    
                     tr.innerHTML = `
                         <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="${item.uraian}" required></td>
                         <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="${item.merk}" required></td>
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="${item.jumlah}" oninput="hitungBaris(this)" required></td>
-                        <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" ${item.satuan === 'BUAH' ? 'selected' : ''}>Buah</option><option value="UNIT" ${item.satuan === 'UNIT' ? 'selected' : ''}>Unit</option><option value="PCS" ${item.satuan === 'PCS' ? 'selected' : ''}>Pcs</option><option value="EKS" ${item.satuan === 'EKS' ? 'selected' : ''}>Eks</option><option value="LEMBAR" ${item.satuan === 'LEMBAR' ? 'selected' : ''}>Lembar</option><option value="PAKET" ${item.satuan === 'PAKET' ? 'selected' : ''}>Paket</option><option value="DOS" ${item.satuan === 'DOS' ? 'selected' : ''}>Dos</option><option value="PAK" ${item.satuan === 'PAK' ? 'selected' : ''}>Pak</option><option value="GROSIR" ${item.satuan === 'GROSIR' ? 'selected' : ''}>Grosir</option><option value="SET" ${item.satuan === 'SET' ? 'selected' : ''}>Set</option></select></td>
+                        <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" ${item.satuan === 'BUAH' ? 'selected' : ''}>Buah</option><option value="UNIT" ${item.satuan === 'UNIT' ? 'selected' : ''}>Unit</option><option value="PCS" ${item.satuan === 'PCS' ? 'selected' : ''}>Pcs</option><option value="EKS" ${item.satuan === 'EKS' ? 'selected' : ''}>Eks</option><option value="LEMBAR" ${item.satuan === 'LEMBAR' ? 'selected' : ''}>Lembar</option><option value="PAKET" ${item.satuan === 'PAKET' ? 'selected' : ''}>Paket</option><option value="DOS" ${item.satuan === 'DOS' ? 'selected' : ''}>Dos</option><option value="PAK" ${item.satuan === 'PAK' ? 'selected' : ''}>Pak</option><option value="GROSIR" ${item.satuan === 'GROSIR' ? 'selected' : ''}>Grosir</option><option value="SET" ${item.satuan === 'SET' ? 'selected' : ''}>Set</option><option value="PASANG" ${item.satuan === 'PASANG' ? 'selected' : ''}>Pasang</option></select></td>
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="${item.harga}" oninput="hitungBaris(this)" required></td>
-                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-gray-100 item-total font-semibold text-right" value="${formatRp(item.total)}" readonly></td>
+                        <td class="p-2 border text-center"><input type="checkbox" class="item-ppn w-5 h-5 cursor-pointer" onchange="hitungBaris(this)" ${isChecked}></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="${formatRp(item.total)}" readonly></td>
                         <td class="p-2 border text-center">
                             <input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)">
-                            <button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full">Ubah Foto</button>
-                            <div class="mt-1 flex justify-center text-center"><img src="${item.foto || ''}" class="h-10 w-auto ${isHidden} item-preview-img rounded border shadow-sm"></div>
+                            <button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Ubah Foto</button>
+                            <div class="flex justify-center"><img src="${item.foto || ''}" class="h-10 w-auto ${isHidden} item-preview-img rounded border shadow-sm"></div>
                         </td>
                         <td class="p-2 border"><select class="w-full p-1 border rounded item-kondisi" required><option value="Baik" ${item.kondisi === 'Baik' ? 'selected' : ''}>Baik</option><option value="Rusak Ringan" ${item.kondisi === 'Rusak Ringan' ? 'selected' : ''}>Rusak Ringan</option><option value="Rusak Berat" ${item.kondisi === 'Rusak Berat' ? 'selected' : ''}>Rusak Berat</option></select></td>
-                        <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold">X</button></td>
+                        <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold bg-red-100 hover:bg-red-200 px-2 rounded">X</button></td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -474,9 +556,8 @@
             return true;
         }
 
-        // AKSI TOMBOL TABEL
         function lihatCetakData(index) {
-            editTimestampId = null; // Bukan mode edit, hanya lihat/cetak
+            editTimestampId = null; 
             if(isiFormDenganData(index)) {
                 document.getElementById('judulForm').innerText = "Lihat & Cetak Dokumen";
                 document.getElementById('btnSimpan').innerText = "💾 Simpan Sebagai Data Baru";
@@ -486,9 +567,9 @@
 
         function editData(index) {
             const doc = dataGlobalTersimpan[index];
-            editTimestampId = doc.timestamp; // Tandai bahwa kita sedang dalam mode EDIT
+            editTimestampId = doc.timestamp; 
             if(isiFormDenganData(index)) {
-                document.getElementById('judulForm').innerText = "Edit Formulir BAP & BAPB";
+                document.getElementById('judulForm').innerText = "Edit Formulir BAP & BAST";
                 document.getElementById('btnSimpan').innerText = "💾 Update Data Tersimpan";
                 document.getElementById('btnSimpan').classList.replace('bg-teal-600', 'bg-orange-600');
                 document.getElementById('btnSimpan').classList.replace('hover:bg-teal-700', 'hover:bg-orange-700');
@@ -510,7 +591,7 @@
                 .then(result => {
                     if(result.status === 'success') {
                         alert(result.message);
-                        ambilDataTersimpan(); // Muat ulang tabel setelah dihapus
+                        ambilDataTersimpan(); 
                     } else { throw new Error(result.message); }
                 })
                 .catch(error => { alert("Gagal menghapus data."); btnSync.innerText = "🔄 Sinkronkan Data"; btnSync.disabled = false; });
@@ -522,8 +603,15 @@
         function hitungBaris(el) {
             const tr = el.closest('tr');
             const jumlah = parseFloat(tr.querySelector('.item-jumlah').value) || 0;
-            const harga = parseFloat(tr.querySelector('.item-harga').value) || 0;
-            tr.querySelector('.item-total').value = formatRp(jumlah * harga);
+            const hargaDasar = parseFloat(tr.querySelector('.item-harga').value) || 0;
+            const isPpn = tr.querySelector('.item-ppn').checked;
+            
+            let total = jumlah * hargaDasar;
+            if(isPpn) {
+                total = total + (total * 0.11); 
+            }
+            
+            tr.querySelector('.item-total').value = formatRp(total);
         }
 
         function prosesKompresiFoto(input) {
@@ -535,11 +623,11 @@
                 img.onload = function () {
                     const canvas = document.createElement('canvas');
                     let width = img.width, height = img.height;
-                    if (width > 300) { height *= 300 / width; width = 300; }
+                    if (width > 800) { height *= 800 / width; width = 800; }
                     canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
                     
                     const tr = input.closest('tr');
                     tr.dataset.fotoBase64 = compressedBase64;
@@ -559,12 +647,13 @@
                 <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" required></td>
                 <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="-" required></td>
                 <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="1" oninput="hitungBaris(this)" required></td>
-                <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" selected>Buah</option><option value="UNIT">Unit</option><option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option><option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option><option value="GROSIR">Grosir</option><option value="SET">Set</option></select></td>
+                <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" selected>Buah</option><option value="UNIT">Unit</option><option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option><option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option><option value="GROSIR">Grosir</option><option value="SET">Set</option><option value="PASANG">Pasang</option></select></td>
                 <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="0" oninput="hitungBaris(this)" required></td>
-                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-gray-100 item-total font-semibold text-right" value="0" readonly></td>
-                <td class="p-2 border text-center"><input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)"><button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full">Pilih Foto</button><div class="mt-1 flex justify-center text-center"><img src="" class="h-10 w-auto hidden item-preview-img rounded border shadow-sm"></div></td>
+                <td class="p-2 border text-center"><input type="checkbox" class="item-ppn w-5 h-5 cursor-pointer" onchange="hitungBaris(this)" checked></td>
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="0" readonly></td>
+                <td class="p-2 border text-center"><input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)"><button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Pilih Foto</button><div class="flex justify-center"><img src="" class="h-10 w-auto hidden item-preview-img rounded border shadow-sm"></div></td>
                 <td class="p-2 border"><select class="w-full p-1 border rounded item-kondisi" required><option value="Baik" selected>Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option></select></td>
-                <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold">X</button></td>
+                <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold bg-red-100 hover:bg-red-200 px-2 rounded">X</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -580,11 +669,16 @@
                 const jumlah = parseInt(row.querySelector('.item-jumlah').value) || 0;
                 const satuan = row.querySelector('.item-satuan').value;
                 const harga = parseFloat(row.querySelector('.item-harga').value) || 0;
-                const total = jumlah * harga;
+                const isPpn = row.querySelector('.item-ppn').checked;
                 const kondisi = row.querySelector('.item-kondisi').value;
                 const foto = row.dataset.fotoBase64 || ""; 
-                totalSemua += total;
-                items.push({ uraian, merk, jumlah, satuan, harga, total, kondisi, foto });
+                
+                const baseTotal = jumlah * harga;
+                const ppnNominal = isPpn ? baseTotal * 0.11 : 0;
+                const totalIncludePpn = baseTotal + ppnNominal;
+                
+                totalSemua += totalIncludePpn;
+                items.push({ uraian, merk, jumlah, satuan, harga, isPpn, ppnNominal, total: totalIncludePpn, kondisi, foto });
             });
 
             return {
@@ -617,7 +711,6 @@
             document.querySelectorAll('.print-pimpinan').forEach(el => el.innerText = data.namaDirektur);
             document.querySelectorAll('.print-no-lampiran-bap').forEach(el => el.innerText = data.noLampiranBap);
             document.querySelectorAll('.print-no-bapb').forEach(el => el.innerText = data.noBapb);
-            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(data.totalHarga));
             document.querySelectorAll('.print-ketua-panitia').forEach(el => el.innerText = data.ketuaPanitia);
             document.querySelectorAll('.print-anggota-1').forEach(el => el.innerText = data.anggota1);
             document.querySelectorAll('.print-anggota-2').forEach(el => el.innerText = data.anggota2);
@@ -631,23 +724,61 @@
             document.querySelectorAll('.print-nip-kepala').forEach(el => el.innerText = data.nipKepalaDinas);
 
             let htmlBarang = '';
+            let totalQty = 0;
+            let totalPpn = 0;
+            let grandTotal = 0;
+
             data.items.forEach((item, index) => {
-                const displayFoto = item.foto ? `<img src="${item.foto}" style="max-height: 60px; max-width: 80px; display: block; margin: auto;" class="rounded border">` : '-';
-                htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right">${formatRp(item.total)}</td><td class="text-center p-1">${displayFoto}</td><td class="text-center">${item.kondisi}</td></tr>`;
+                totalQty += item.jumlah;
+                totalPpn += item.ppnNominal;
+                grandTotal += item.total;
+                
+                htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right">${formatRp(item.ppnNominal)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
             });
+
             document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
+            document.querySelectorAll('.print-total-jumlah').forEach(el => el.innerText = totalQty);
+            document.querySelectorAll('.print-total-ppn').forEach(el => el.innerText = formatRp(totalPpn));
+            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(grandTotal));
+
+            let htmlFoto = '';
+            const itemsWithFoto = data.items.filter(item => item.foto && item.foto !== "");
+            
+            for (let i = 0; i < itemsWithFoto.length; i += 4) {
+                const chunk = itemsWithFoto.slice(i, i + 4);
+                
+                htmlFoto += `<div class="print-page halaman-landscape" style="page-break-before: always; padding-top: 1cm;">`;
+                htmlFoto += `<p class="font-bold text-center mb-6 text-xl uppercase underline">LAMPIRAN FOTO DOKUMENTASI BARANG</p>`;
+                htmlFoto += `<div class="grid grid-cols-2 gap-8 text-center px-8">`;
+                
+                chunk.forEach(item => {
+                    htmlFoto += `
+                        <div class="flex flex-col items-center justify-center border-2 border-gray-400 p-4 rounded-lg shadow-sm hindari-terpotong">
+                            <div class="h-64 flex items-center justify-center w-full">
+                                <img src="${item.foto}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                            </div>
+                            <p class="mt-4 font-bold text-lg uppercase bg-gray-100 w-full py-1 border-t-2 border-gray-400">${item.uraian}</p>
+                        </div>
+                    `;
+                });
+                
+                htmlFoto += `</div></div>`;
+            }
+            document.getElementById('print-foto-container').innerHTML = htmlFoto;
 
             document.getElementById('print-area').classList.remove('hidden');
             document.getElementById('template-BAP').classList.add('hidden');
-            document.getElementById('template-BAPB').classList.add('hidden');
+            document.getElementById('template-BAST').classList.add('hidden');
+            
             if(jenis === 'BAP') document.getElementById('template-BAP').classList.remove('hidden');
-            if(jenis === 'BAPB') document.getElementById('template-BAPB').classList.remove('hidden');
+            if(jenis === 'BAST') document.getElementById('template-BAST').classList.remove('hidden');
 
-            window.print();
-            setTimeout(() => { document.getElementById('print-area').classList.add('hidden'); }, 1000);
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => { document.getElementById('print-area').classList.add('hidden'); }, 1000);
+            }, 300);
         }
 
-        // FUNGSI SIMPAN & UPDATE
         function simpanKeDatabase() {
             if(!document.getElementById('mainForm').checkValidity()) { alert("Harap lengkapi form sebelum menyimpan."); return; }
             
@@ -657,7 +788,6 @@
 
             const dataToSave = kumpulkanData();
             
-            // Cek apakah ini Update (Edit) atau Simpan Baru
             const payload = {
                 action: editTimestampId ? "update" : "save",
                 data: dataToSave
@@ -674,8 +804,8 @@
                     pesan.innerText = result.message;
                     pesan.className = "text-center mt-3 font-semibold text-green-600";
                     alert(result.message);
-                    bukaFormBaru(); // Reset form
-                    ambilDataTersimpan(); // Refresh tabel
+                    bukaFormBaru(); 
+                    ambilDataTersimpan(); 
                 } else { throw new Error(result.message); }
             })
             .catch(error => { alert("Gagal memproses data. Cek koneksi & URL Apps Script."); })
