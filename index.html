@@ -21,11 +21,10 @@
             .no-print { display: none !important; }
             .print-page { page-break-after: always; }
             
-            /* --- PERBAIKAN: Mencegah tabel dan baris terpotong ke halaman baru --- */
+            /* Mencegah tabel dan baris terpotong ke halaman baru */
             table { page-break-inside: auto; }
             tr, tfoot { page-break-inside: avoid; page-break-after: auto; }
             .hindari-terpotong { page-break-inside: avoid; }
-            /* ---------------------------------------------------------------------- */
 
             .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt; } 
             .print-table th, .print-table td { border: 1px solid black; padding: 6px; }
@@ -100,7 +99,7 @@
                                     <th class="p-2 border">Tanggal Input</th>
                                     <th class="p-2 border">No. SPK / Kontrak</th>
                                     <th class="p-2 border">Nama Perusahaan</th>
-                                    <th class="p-2 border">Total Harga (Inc. PPN & Ongkir)</th>
+                                    <th class="p-2 border">Total Harga (Keseluruhan)</th>
                                     <th class="p-2 border text-center w-48">Aksi</th>
                                 </tr>
                             </thead>
@@ -131,10 +130,17 @@
                         <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Penyedia (Rekanan)</h2>
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Perusahaan</label><input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="CV. SEANA STORE" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Direktur/Pimpinan</label><input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="ADELIA PUTRI" required></div>
-                        <!-- Penambahan Input Ongkos Kirim -->
+                        
+                        <!-- Penambahan Biaya Lain-lain Global (Ongkir & PPN) -->
                         <div class="mb-3 mt-8 border-t pt-4">
                             <label class="block text-sm font-bold text-indigo-700">Biaya Ongkos Kirim (Rp) - Jika ada</label>
                             <input type="number" id="ongkosKirim" class="w-full mt-1 p-2 border-2 border-indigo-300 rounded font-bold text-lg" value="0" placeholder="0">
+                        </div>
+                        <div class="mb-3 mt-4 bg-indigo-50 p-3 rounded border border-indigo-200">
+                            <label class="flex items-center space-x-2 text-sm font-bold text-indigo-800 cursor-pointer">
+                                <input type="checkbox" id="kenakanPpn" class="w-5 h-5 cursor-pointer" checked>
+                                <span>Kenakan PPN 11% Keseluruhan Barang</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -164,7 +170,7 @@
 
                 <div class="mt-6 bg-gray-50 p-4 rounded border">
                     <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h2 class="font-semibold text-lg">Daftar Barang & Perhitungan Harga</h2>
+                        <h2 class="font-semibold text-lg">Daftar Barang & Harga Satuan</h2>
                         <button type="button" onclick="tambahBarang()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">+ Tambah Barang</button>
                     </div>
                     
@@ -177,7 +183,6 @@
                                     <th class="p-2 border w-20">Jumlah</th>
                                     <th class="p-2 border w-28">Satuan</th>
                                     <th class="p-2 border w-36">Harga Dasar (Rp)</th>
-                                    <th class="p-2 border w-16 text-center">+PPN 11%</th>
                                     <th class="p-2 border w-36">Total Harga (Rp)</th>
                                     <th class="p-2 border w-32">Foto Barang</th> 
                                     <th class="p-2 border w-28">Kondisi</th>
@@ -247,32 +252,31 @@
                             <th>Jml</th>
                             <th>Satuan</th>
                             <th>Harga Dasar<br>(Rp)</th>
-                            <th>PPN 11%<br>(Rp)</th>
                             <th>Total Harga<br>(Rp)</th>
                             <th>Kondisi</th>
                         </tr>
                     </thead>
                     <tbody class="print-tbody-barang"></tbody>
                     <tfoot>
-                        <!-- Footer dengan Jumlah Keseluruhan -->
+                        <!-- Footer Rekapitulasi Harga Global -->
                         <tr class="font-bold bg-gray-50">
-                            <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
-                            <td class="text-center print-total-jumlah text-indigo-700"></td>
-                            <td></td>
-                            <td></td>
-                            <td class="text-right print-total-ppn text-indigo-700"></td>
-                            <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td colspan="6" class="text-right pr-4 uppercase">Subtotal :</td>
+                            <td class="text-right print-subtotal text-indigo-700"></td>
                             <td></td>
                         </tr>
-                        <!-- Tambahan Baris Ongkos Kirim & Grand Total -->
-                        <tr class="font-bold print-ongkir-row hidden">
-                            <td colspan="7" class="text-right pr-4 italic">BIAYA ONGKOS KIRIM :</td>
+                        <tr class="font-bold print-ppn-row bg-gray-50">
+                            <td colspan="6" class="text-right pr-4 italic">PPN 11% :</td>
+                            <td class="text-right print-ppn-val text-red-600"></td>
+                            <td></td>
+                        </tr>
+                        <tr class="font-bold print-ongkir-row hidden bg-gray-50">
+                            <td colspan="6" class="text-right pr-4 italic">Biaya Ongkos Kirim :</td>
                             <td class="text-right print-ongkir-val text-red-600"></td>
                             <td></td>
                         </tr>
-                        <tr class="font-bold print-ongkir-row hidden bg-gray-100">
-                            <td colspan="7" class="text-right pr-4 uppercase">GRAND TOTAL + ONGKOS KIRIM :</td>
-                            <td class="text-right print-grandtotal-ongkir text-indigo-800"></td>
+                        <tr class="font-bold bg-gray-200 text-lg">
+                            <td colspan="6" class="text-right pr-4 uppercase py-3">GRAND TOTAL :</td>
+                            <td class="text-right print-grandtotal text-indigo-900 py-3"></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -332,32 +336,31 @@
                             <th>Jml</th>
                             <th>Satuan</th>
                             <th>Harga Dasar<br>(Rp)</th>
-                            <th>PPN 11%<br>(Rp)</th>
                             <th>Total Harga<br>(Rp)</th>
                             <th>Kondisi</th>
                         </tr>
                     </thead>
                     <tbody class="print-tbody-barang"></tbody>
                     <tfoot>
-                        <!-- Footer dengan Jumlah Keseluruhan -->
+                        <!-- Footer Rekapitulasi Harga Global -->
                         <tr class="font-bold bg-gray-50">
-                            <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
-                            <td class="text-center print-total-jumlah text-indigo-700"></td>
-                            <td></td>
-                            <td></td>
-                            <td class="text-right print-total-ppn text-indigo-700"></td>
-                            <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td colspan="6" class="text-right pr-4 uppercase">Subtotal :</td>
+                            <td class="text-right print-subtotal text-indigo-700"></td>
                             <td></td>
                         </tr>
-                        <!-- Tambahan Baris Ongkos Kirim & Grand Total -->
-                        <tr class="font-bold print-ongkir-row hidden">
-                            <td colspan="7" class="text-right pr-4 italic">BIAYA ONGKOS KIRIM :</td>
+                        <tr class="font-bold print-ppn-row bg-gray-50">
+                            <td colspan="6" class="text-right pr-4 italic">PPN 11% :</td>
+                            <td class="text-right print-ppn-val text-red-600"></td>
+                            <td></td>
+                        </tr>
+                        <tr class="font-bold print-ongkir-row hidden bg-gray-50">
+                            <td colspan="6" class="text-right pr-4 italic">Biaya Ongkos Kirim :</td>
                             <td class="text-right print-ongkir-val text-red-600"></td>
                             <td></td>
                         </tr>
-                        <tr class="font-bold print-ongkir-row hidden bg-gray-100">
-                            <td colspan="7" class="text-right pr-4 uppercase">GRAND TOTAL + ONGKOS KIRIM :</td>
-                            <td class="text-right print-grandtotal-ongkir text-indigo-800"></td>
+                        <tr class="font-bold bg-gray-200 text-lg">
+                            <td colspan="6" class="text-right pr-4 uppercase py-3">GRAND TOTAL :</td>
+                            <td class="text-right print-grandtotal text-indigo-900 py-3"></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -423,7 +426,8 @@
             document.getElementById('btnSimpan').classList.replace('bg-orange-600', 'bg-teal-600');
             document.getElementById('btnSimpan').classList.replace('hover:bg-orange-700', 'hover:bg-teal-700');
             
-            document.getElementById('ongkosKirim').value = "0"; // Reset ongkir
+            document.getElementById('ongkosKirim').value = "0"; 
+            document.getElementById('kenakanPpn').checked = true;
             document.getElementById('bodyBarang').innerHTML = '';
             tambahBarang();
             navigasi('form');
@@ -541,8 +545,9 @@
             document.getElementById('namaPerusahaan').value = data.namaPenyedia || '';
             document.getElementById('namaPimpinan').value = data.namaDirektur || '';
             
-            // Pengisian nilai ongkos kirim jika ada di data tersimpan
             document.getElementById('ongkosKirim').value = data.ongkosKirim || 0;
+            // Jika isPpn belum ada pada data lampau, asumsikan true (default lama)
+            document.getElementById('kenakanPpn').checked = data.isPpn !== false; 
             
             document.getElementById('ketuaPanitia').value = data.ketuaPanitia || '';
             document.getElementById('anggota1').value = data.anggota1 || '';
@@ -563,7 +568,8 @@
                     const tr = document.createElement('tr');
                     tr.dataset.fotoBase64 = item.foto || ""; 
                     const isHidden = item.foto ? "" : "hidden";
-                    const isChecked = item.isPpn !== false ? "checked" : "";
+                    // Untuk kompatibilitas data lama yg mungkin punya item.total yg sudah termasuk PPN per baris
+                    // Kita akan set input harga manual
                     
                     tr.innerHTML = `
                         <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="${item.uraian}" required></td>
@@ -571,8 +577,7 @@
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="${item.jumlah}" oninput="hitungBaris(this)" required></td>
                         <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" ${item.satuan === 'BUAH' ? 'selected' : ''}>Buah</option><option value="UNIT" ${item.satuan === 'UNIT' ? 'selected' : ''}>Unit</option><option value="PCS" ${item.satuan === 'PCS' ? 'selected' : ''}>Pcs</option><option value="EKS" ${item.satuan === 'EKS' ? 'selected' : ''}>Eks</option><option value="LEMBAR" ${item.satuan === 'LEMBAR' ? 'selected' : ''}>Lembar</option><option value="PAKET" ${item.satuan === 'PAKET' ? 'selected' : ''}>Paket</option><option value="DOS" ${item.satuan === 'DOS' ? 'selected' : ''}>Dos</option><option value="PAK" ${item.satuan === 'PAK' ? 'selected' : ''}>Pak</option><option value="GROSIR" ${item.satuan === 'GROSIR' ? 'selected' : ''}>Grosir</option><option value="SET" ${item.satuan === 'SET' ? 'selected' : ''}>Set</option><option value="PASANG" ${item.satuan === 'PASANG' ? 'selected' : ''}>Pasang</option></select></td>
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="${item.harga}" oninput="hitungBaris(this)" required></td>
-                        <td class="p-2 border text-center"><input type="checkbox" class="item-ppn w-5 h-5 cursor-pointer" onchange="hitungBaris(this)" ${isChecked}></td>
-                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="${formatRp(item.total)}" readonly></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="${formatRp(item.jumlah * item.harga)}" readonly></td>
                         <td class="p-2 border text-center">
                             <input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)">
                             <button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Ubah Foto</button>
@@ -635,13 +640,7 @@
             const tr = el.closest('tr');
             const jumlah = parseFloat(tr.querySelector('.item-jumlah').value) || 0;
             const hargaDasar = parseFloat(tr.querySelector('.item-harga').value) || 0;
-            const isPpn = tr.querySelector('.item-ppn').checked;
-            
-            let total = jumlah * hargaDasar;
-            if(isPpn) {
-                total = total + (total * 0.11); 
-            }
-            
+            const total = jumlah * hargaDasar;
             tr.querySelector('.item-total').value = formatRp(total);
         }
 
@@ -680,7 +679,6 @@
                 <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="1" oninput="hitungBaris(this)" required></td>
                 <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" selected>Buah</option><option value="UNIT">Unit</option><option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option><option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option><option value="GROSIR">Grosir</option><option value="SET">Set</option><option value="PASANG">Pasang</option></select></td>
                 <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="0" oninput="hitungBaris(this)" required></td>
-                <td class="p-2 border text-center"><input type="checkbox" class="item-ppn w-5 h-5 cursor-pointer" onchange="hitungBaris(this)" checked></td>
                 <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="0" readonly></td>
                 <td class="p-2 border text-center"><input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)"><button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Pilih Foto</button><div class="flex justify-center"><img src="" class="h-10 w-auto hidden item-preview-img rounded border shadow-sm"></div></td>
                 <td class="p-2 border"><select class="w-full p-1 border rounded item-kondisi" required><option value="Baik" selected>Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option></select></td>
@@ -693,8 +691,9 @@
 
         function kumpulkanData() {
             const items = [];
-            let totalSemua = 0;
+            let subtotal = 0;
             const ongkosKirim = parseFloat(document.getElementById('ongkosKirim').value) || 0;
+            const isPpn = document.getElementById('kenakanPpn').checked;
 
             document.querySelectorAll('#bodyBarang tr').forEach(row => {
                 const uraian = row.querySelector('.item-uraian').value;
@@ -702,23 +701,20 @@
                 const jumlah = parseInt(row.querySelector('.item-jumlah').value) || 0;
                 const satuan = row.querySelector('.item-satuan').value;
                 const harga = parseFloat(row.querySelector('.item-harga').value) || 0;
-                const isPpn = row.querySelector('.item-ppn').checked;
                 const kondisi = row.querySelector('.item-kondisi').value;
                 const foto = row.dataset.fotoBase64 || ""; 
                 
-                const baseTotal = jumlah * harga;
-                const ppnNominal = isPpn ? baseTotal * 0.11 : 0;
-                const totalIncludePpn = baseTotal + ppnNominal;
-                
-                totalSemua += totalIncludePpn;
-                items.push({ uraian, merk, jumlah, satuan, harga, isPpn, ppnNominal, total: totalIncludePpn, kondisi, foto });
+                const total = jumlah * harga;
+                subtotal += total;
+
+                items.push({ uraian, merk, jumlah, satuan, harga, total, kondisi, foto });
             });
 
-            // Total Keseluruhan = Total Barang + Ongkos Kirim
-            totalSemua += ongkosKirim; 
+            const ppnNominal = isPpn ? subtotal * 0.11 : 0;
+            const totalHarga = subtotal + ppnNominal + ongkosKirim;
 
             return {
-                tanggalDokumen: document.getElementById('tglDokumen').value, noSpk: document.getElementById('noSpk').value, tanggalSpk: document.getElementById('tglSpk').value, noLampiranBap: document.getElementById('noLampiranBap').value, noBapb: document.getElementById('noBapb').value, namaPenyedia: document.getElementById('namaPerusahaan').value, namaDirektur: document.getElementById('namaPimpinan').value, ongkosKirim: ongkosKirim, ketuaPanitia: document.getElementById('ketuaPanitia').value, anggota1: document.getElementById('anggota1').value, anggota2: document.getElementById('anggota2').value, anggota3: document.getElementById('anggota3').value, anggota4: document.getElementById('anggota4').value, anggota5: document.getElementById('anggota5').value, pengurusBarang: document.getElementById('pengurusBarang').value, nipPengurusBarang: document.getElementById('nipPengurusBarang').value, kepalaDinas: document.getElementById('kepalaDinas').value, pangkatKepalaDinas: document.getElementById('pangkatKepalaDinas').value, nipKepalaDinas: document.getElementById('nipKepalaDinas').value, items: items, totalHarga: totalSemua
+                tanggalDokumen: document.getElementById('tglDokumen').value, noSpk: document.getElementById('noSpk').value, tanggalSpk: document.getElementById('tglSpk').value, noLampiranBap: document.getElementById('noLampiranBap').value, noBapb: document.getElementById('noBapb').value, namaPenyedia: document.getElementById('namaPerusahaan').value, namaDirektur: document.getElementById('namaPimpinan').value, ongkosKirim: ongkosKirim, isPpn: isPpn, ppnNominal: ppnNominal, ketuaPanitia: document.getElementById('ketuaPanitia').value, anggota1: document.getElementById('anggota1').value, anggota2: document.getElementById('anggota2').value, anggota3: document.getElementById('anggota3').value, anggota4: document.getElementById('anggota4').value, anggota5: document.getElementById('anggota5').value, pengurusBarang: document.getElementById('pengurusBarang').value, nipPengurusBarang: document.getElementById('nipPengurusBarang').value, kepalaDinas: document.getElementById('kepalaDinas').value, pangkatKepalaDinas: document.getElementById('pangkatKepalaDinas').value, nipKepalaDinas: document.getElementById('nipKepalaDinas').value, items: items, totalHarga: totalHarga
             };
         }
 
@@ -760,32 +756,36 @@
             document.querySelectorAll('.print-nip-kepala').forEach(el => el.innerText = data.nipKepalaDinas);
 
             let htmlBarang = '';
-            let totalQty = 0;
-            let totalPpn = 0;
-            let grandTotalBarang = 0;
+            let subtotal = 0;
 
             data.items.forEach((item, index) => {
-                totalQty += item.jumlah;
-                totalPpn += item.ppnNominal;
-                grandTotalBarang += item.total;
-                
-                htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right">${formatRp(item.ppnNominal)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
+                subtotal += item.total;
+                htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
             });
 
+            // Update isi tabel
             document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
-            document.querySelectorAll('.print-total-jumlah').forEach(el => el.innerText = totalQty);
-            document.querySelectorAll('.print-total-ppn').forEach(el => el.innerText = formatRp(totalPpn));
-            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(grandTotalBarang));
+            
+            // Rekapitulasi Pembayaran di Footer
+            document.querySelectorAll('.print-subtotal').forEach(el => el.innerText = formatRp(subtotal));
+            
+            if (data.isPpn) {
+                document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.print-ppn-val').forEach(el => el.innerText = formatRp(data.ppnNominal));
+            } else {
+                document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.add('hidden'));
+            }
 
-            // Logika Menampilkan Ongkos Kirim pada Halaman Cetak
             if (data.ongkosKirim > 0) {
                 document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.print-ongkir-val').forEach(el => el.innerText = formatRp(data.ongkosKirim));
-                document.querySelectorAll('.print-grandtotal-ongkir').forEach(el => el.innerText = formatRp(data.totalHarga));
             } else {
                 document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.add('hidden'));
             }
+            
+            document.querySelectorAll('.print-grandtotal').forEach(el => el.innerText = formatRp(data.totalHarga));
 
+            // ==== MEMBUAT HALAMAN FOTO OTOMATIS ====
             let htmlFoto = '';
             const itemsWithFoto = data.items.filter(item => item.foto && item.foto !== "");
             
@@ -811,6 +811,7 @@
             }
             document.getElementById('print-foto-container').innerHTML = htmlFoto;
 
+            // ==== PROSES MENAMPILKAN TAMPILAN CETAK ====
             document.getElementById('print-area').classList.remove('hidden');
             document.getElementById('template-BAP').classList.add('hidden');
             document.getElementById('template-BAST').classList.add('hidden');
