@@ -8,11 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @media print {
-            /* Pengaturan orientasi kertas default (Portrait) */
             @page { size: A4 portrait; margin: 1.5cm; }
-            
-            /* Pengaturan orientasi khusus halaman Lampiran (Landscape) */
             @page landscape_page { size: A4 landscape; margin: 1.5cm; }
+            
             .halaman-landscape { page: landscape_page; width: 100%; }
 
             body * { visibility: hidden; }
@@ -21,7 +19,6 @@
             .no-print { display: none !important; }
             .print-page { page-break-after: always; }
             
-            /* Mencegah tabel dan baris terpotong ke halaman baru */
             table { page-break-inside: auto; }
             tr, tfoot { page-break-inside: avoid; page-break-after: auto; }
             .hindari-terpotong { page-break-inside: avoid; }
@@ -38,6 +35,7 @@
 </head>
 <body class="text-gray-800">
 
+    <!-- LOGIN SECTION -->
     <div id="login-section" class="min-h-screen flex items-center justify-center no-print">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
             <div class="text-center mb-8">
@@ -53,6 +51,7 @@
         </div>
     </div>
 
+    <!-- APP SECTION -->
     <div id="app-section" class="hidden min-h-screen no-print">
         <nav class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,6 +76,7 @@
             </div>
         </div>
 
+        <!-- VIEW: DASHBOARD -->
         <div id="view-dashboard" class="max-w-7xl mx-auto px-4 mt-6 pb-12">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white p-6 rounded-lg shadow border-l-4 border-indigo-500"><p class="text-sm text-gray-500 font-bold uppercase">Total Dokumen</p><h3 class="text-3xl font-bold text-gray-800" id="statTotalDoc">0</h3></div>
@@ -112,6 +112,7 @@
             </div>
         </div>
 
+        <!-- VIEW: FORM -->
         <div id="view-form" class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-lg hidden mt-6 pb-12 mb-12">
             <h1 id="judulForm" class="text-2xl font-bold mb-6 text-center text-gray-800 border-b pb-4">Formulir BAP & BAST Baru</h1>
             
@@ -131,7 +132,6 @@
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Perusahaan</label><input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="INTERNASIONAL KREASI NUSANTARA" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Direktur/Pimpinan</label><input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="CIPTA KUSUMA SUJANTI" required></div>
                         
-                        <!-- Penambahan Biaya Lain-lain Global (Ongkir & PPN) -->
                         <div class="mb-3 mt-8 border-t pt-4">
                             <label class="block text-sm font-bold text-indigo-700">Biaya Ongkos Kirim (Rp) - Jika ada</label>
                             <input type="number" id="ongkosKirim" oninput="hitungTotalLive()" class="w-full mt-1 p-2 border-2 border-indigo-300 rounded font-bold text-lg" value="0" placeholder="0">
@@ -190,7 +190,7 @@
                                 </tr>
                             </thead>
                             <tbody id="bodyBarang"></tbody>
-                            <!-- Footer Live Rekapitulasi di Form -->
+                            <!-- Footer Live Rekapitulasi -->
                             <tfoot>
                                 <tr class="bg-gray-50 border-t-[3px] border-gray-300">
                                     <td colspan="5" class="p-2 border-r text-right font-bold text-sm uppercase">Total Harga Produk :</td>
@@ -227,6 +227,7 @@
         </div>
     </div>
 
+    <!-- AREA CETAK -->
     <div id="print-area" class="hidden bg-white">
         
         <!-- ======================= TEMPLATE BAP ======================= -->
@@ -365,7 +366,6 @@
                     </thead>
                     <tbody class="print-tbody-barang"></tbody>
                     <tfoot>
-                        <!-- Footer Rekapitulasi Harga Global -->
                         <tr class="font-bold bg-gray-50">
                             <td colspan="6" class="text-right pr-4 uppercase">Total Harga Produk:</td>
                             <td class="text-right print-subtotal text-indigo-700"></td>
@@ -402,6 +402,7 @@
 
     </div>
 
+    <!-- PUSAT JAVASCRIPT: BERSIH & BEBAS FUNGSI GANDA -->
     <script>
         // ==============================================================================
         const urlAppScript = "https://script.google.com/macros/s/AKfycbxwABgXBmWGl9IiCi3tu1TwC9l0H6dnRH_gF2nSsogCoG1PC-UprFagTvwDcbLK2HbZ/exec"; 
@@ -411,16 +412,23 @@
         let dataGlobalTersimpan = [];
         let editTimestampId = null; 
 
+        // 1. FUNGSI UTILITAS UMUM
         const formatRp = (angka) => { 
             let num = parseFloat(angka);
             if(isNaN(num)) return "0";
             return new Intl.NumberFormat('id-ID').format(num); 
         };
 
-        tambahBarang();
+        const escapeHtml = (unsafe) => {
+            return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        };
+
+        // Inisiasi awal
         document.getElementById('tglDokumen').valueAsDate = new Date();
+        tambahBarang();
         hitungTotalLive();
 
+        // 2. FUNGSI LOGIN & NAVIGASI
         function prosesLogin(e) {
             e.preventDefault();
             if(document.getElementById('loginUser').value === 'admin' && document.getElementById('loginPass').value === 'admin123') {
@@ -451,22 +459,26 @@
 
         function bukaFormBaru() {
             editTimestampId = null; 
+            document.getElementById('mainForm').reset();
             document.getElementById('judulForm').innerText = "Formulir BAP & BAST Baru";
             document.getElementById('btnSimpan').innerText = "💾 Simpan Data Baru";
             document.getElementById('btnSimpan').classList.replace('bg-orange-600', 'bg-teal-600');
             document.getElementById('btnSimpan').classList.replace('hover:bg-orange-700', 'hover:bg-teal-700');
             
+            document.getElementById('tglDokumen').valueAsDate = new Date();
             document.getElementById('ongkosKirim').value = "0"; 
             document.getElementById('kenakanPpn').checked = true;
             document.getElementById('bodyBarang').innerHTML = '';
+            
             tambahBarang();
             hitungTotalLive();
             navigasi('form');
         }
 
+        // 3. FUNGSI DATABASE (FETCH, RENDER DASHBOARD & TABEL)
         function ambilDataTersimpan() {
             if(!urlAppScript || urlAppScript === "PASTE_URL_WEB_APP_ANDA_DISINI") {
-                alert("Silakan buka kode HTML dan paste URL Web App Google Apps Script Anda!"); return;
+                alert("Silakan paste URL Web App Google Apps Script Anda terlebih dahulu!"); return;
             }
 
             const btn = document.getElementById('btnSync');
@@ -477,29 +489,25 @@
                 body: JSON.stringify({ action: 'get' })
             })
             .then(res => {
-                if(!res.ok) throw new Error("Gagal terhubung ke Google Apps Script. Kode Status: " + res.status);
+                if(!res.ok) throw new Error("Gagal terhubung ke Google Apps Script.");
                 return res.json();
             })
             .then(result => {
                 if(result.status === 'success') {
                     dataGlobalTersimpan = result.data.map(d => {
-                        let detailData = null;
-                        try { detailData = JSON.parse(d.fullDataJson); } catch(e){}
-                        d.parsedDetail = detailData;
+                        try { d.parsedDetail = JSON.parse(d.fullDataJson); } catch(e) { d.parsedDetail = null; }
                         return d;
                     });
                     
                     try {
                         updateDasbor(dataGlobalTersimpan);
                     } catch(renderErr) {
-                        console.error("Gagal saat render dasbor:", renderErr);
-                        alert("Data berhasil ditarik, tetapi ada data yang rusak/tidak lengkap (corrupt). Detail error: " + renderErr.message);
+                        alert("Data ditarik tapi ada format rusak. Detail: " + renderErr.message);
                     }
                 } else { throw new Error(result.message); }
             })
             .catch(err => { 
-                console.error("Fetch Error:", err);
-                alert("GAGAL MEMUAT DATA:\n" + err.message + "\n\n1. Pastikan URL Apps Script benar.\n2. Pastikan Akses Deployment disetel ke 'Siapa Saja' (Anyone)."); 
+                alert("GAGAL MEMUAT DATA:\n" + err.message); 
             })
             .finally(() => { btn.innerText = "🔄 Sinkronkan Data"; btn.disabled = false; });
         }
@@ -586,36 +594,73 @@
             });
         }
 
+        // 4. FUNGSI EDIT & ISI FORM
+        function editData(index) {
+            try {
+                const doc = dataGlobalTersimpan[index];
+                editTimestampId = doc.timestamp; 
+                if(isiFormDenganData(index)) {
+                    document.getElementById('judulForm').innerText = "Edit Formulir BAP & BAST";
+                    document.getElementById('btnSimpan').innerText = "💾 Update Data Tersimpan";
+                    document.getElementById('btnSimpan').classList.replace('bg-teal-600', 'bg-orange-600');
+                    document.getElementById('btnSimpan').classList.replace('hover:bg-teal-700', 'hover:bg-orange-700');
+                    navigasi('form');
+                }
+            } catch(e) {
+                alert("Gagal memuat form untuk Edit. Kesalahan: " + e.message);
+            }
+        }
+
+        function lihatCetakData(index) {
+            try {
+                editTimestampId = null; 
+                if(isiFormDenganData(index)) {
+                    document.getElementById('judulForm').innerText = "Lihat & Cetak Dokumen";
+                    document.getElementById('btnSimpan').innerText = "💾 Simpan Sebagai Data Baru";
+                    document.getElementById('btnSimpan').classList.replace('bg-orange-600', 'bg-teal-600');
+                    document.getElementById('btnSimpan').classList.replace('hover:bg-orange-700', 'hover:bg-teal-700');
+                    navigasi('form');
+                }
+            } catch(e) {
+                alert("Gagal memuat dokumen untuk dicetak. Kesalahan: " + e.message);
+            }
+        }
+
         function isiFormDenganData(index) {
             const doc = dataGlobalTersimpan[index];
-            if (!doc || !doc.parsedDetail) { alert("Data dokumen tidak lengkap."); return false; }
+            if (!doc || !doc.parsedDetail) { alert("Data dokumen tidak lengkap atau rusak."); return false; }
             const data = doc.parsedDetail;
 
-            document.getElementById('tglDokumen').value = data.tanggalDokumen || '';
-            document.getElementById('noSpk').value = data.noSpk || '';
-            document.getElementById('tglSpk').value = data.tanggalSpk || '';
-            document.getElementById('noLampiranBap').value = data.noLampiranBap || '';
-            document.getElementById('noBapb').value = data.noBapb || '';
-            document.getElementById('namaPerusahaan').value = data.namaPenyedia || '';
-            document.getElementById('namaPimpinan').value = data.namaDirektur || '';
+            // Aman dari ID element yang mungkin tidak sengaja hilang
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; }
             
-            document.getElementById('ongkosKirim').value = data.ongkosKirim || 0;
-            document.getElementById('kenakanPpn').checked = data.isPpn !== false; 
+            setVal('tglDokumen', data.tanggalDokumen);
+            setVal('noSpk', data.noSpk);
+            setVal('tglSpk', data.tanggalSpk);
+            setVal('noLampiranBap', data.noLampiranBap);
+            setVal('noBapb', data.noBapb);
+            setVal('namaPerusahaan', data.namaPenyedia);
+            setVal('namaPimpinan', data.namaDirektur);
+            setVal('ongkosKirim', data.ongkosKirim || 0);
             
-            document.getElementById('ketuaPanitia').value = data.ketuaPanitia || '';
-            document.getElementById('anggota1').value = data.anggota1 || '';
-            document.getElementById('anggota2').value = data.anggota2 || '';
-            document.getElementById('anggota3').value = data.anggota3 || '';
-            document.getElementById('anggota4').value = data.anggota4 || '';
-            document.getElementById('anggota5').value = data.anggota5 || '';
-            document.getElementById('pengurusBarang').value = data.pengurusBarang || '';
-            document.getElementById('nipPengurusBarang').value = data.nipPengurusBarang || '';
-            document.getElementById('kepalaDinas').value = data.kepalaDinas || '';
-            document.getElementById('pangkatKepalaDinas').value = data.pangkatKepalaDinas || '';
-            document.getElementById('nipKepalaDinas').value = data.nipKepalaDinas || '';
+            const elPpn = document.getElementById('kenakanPpn');
+            if(elPpn) elPpn.checked = data.isPpn !== false; 
+            
+            setVal('ketuaPanitia', data.ketuaPanitia);
+            setVal('anggota1', data.anggota1);
+            setVal('anggota2', data.anggota2);
+            setVal('anggota3', data.anggota3);
+            setVal('anggota4', data.anggota4);
+            setVal('anggota5', data.anggota5);
+            setVal('pengurusBarang', data.pengurusBarang);
+            setVal('nipPengurusBarang', data.nipPengurusBarang);
+            setVal('kepalaDinas', data.kepalaDinas);
+            setVal('pangkatKepalaDinas', data.pangkatKepalaDinas);
+            setVal('nipKepalaDinas', data.nipKepalaDinas);
 
             const tbody = document.getElementById('bodyBarang');
             tbody.innerHTML = '';
+            
             if (data.items && data.items.length > 0) {
                 data.items.forEach(item => {
                     const tr = document.createElement('tr');
@@ -623,8 +668,8 @@
                     const isHidden = item.foto ? "" : "hidden";
                     
                     tr.innerHTML = `
-                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="${item.uraian}" required></td>
-                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="${item.merk}" required></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" value="${escapeHtml(item.uraian)}" required></td>
+                        <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="${escapeHtml(item.merk)}" required></td>
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="${item.jumlah}" oninput="hitungBaris(this)" required></td>
                         <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" ${item.satuan === 'BUAH' ? 'selected' : ''}>Buah</option><option value="UNIT" ${item.satuan === 'UNIT' ? 'selected' : ''}>Unit</option><option value="PCS" ${item.satuan === 'PCS' ? 'selected' : ''}>Pcs</option><option value="EKS" ${item.satuan === 'EKS' ? 'selected' : ''}>Eks</option><option value="LEMBAR" ${item.satuan === 'LEMBAR' ? 'selected' : ''}>Lembar</option><option value="PAKET" ${item.satuan === 'PAKET' ? 'selected' : ''}>Paket</option><option value="DOS" ${item.satuan === 'DOS' ? 'selected' : ''}>Dos</option><option value="PAK" ${item.satuan === 'PAK' ? 'selected' : ''}>Pak</option><option value="GROSIR" ${item.satuan === 'GROSIR' ? 'selected' : ''}>Grosir</option><option value="SET" ${item.satuan === 'SET' ? 'selected' : ''}>Set</option><option value="PASANG" ${item.satuan === 'PASANG' ? 'selected' : ''}>Pasang</option></select></td>
                         <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="${item.harga}" oninput="hitungBaris(this)" required></td>
@@ -639,10 +684,36 @@
                     `;
                     tbody.appendChild(tr);
                 });
-            } else { tambahBarang(); }
+            } else { 
+                tambahBarang(); 
+            }
             
             hitungTotalLive();
             return true;
+        }
+
+        // 5. FUNGSI DINAMIS TABEL FORM
+        function tambahBarang() {
+            const tbody = document.getElementById('bodyBarang');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" required></td>
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="-" required></td>
+                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="1" oninput="hitungBaris(this)" required></td>
+                <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" selected>Buah</option><option value="UNIT">Unit</option><option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option><option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option><option value="GROSIR">Grosir</option><option value="SET">Set</option><option value="PASANG">Pasang</option></select></td>
+                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="0" oninput="hitungBaris(this)" required></td>
+                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="0" readonly></td>
+                <td class="p-2 border text-center"><input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)"><button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Pilih Foto</button><div class="flex justify-center"><img src="" class="h-10 w-auto hidden item-preview-img rounded border shadow-sm"></div></td>
+                <td class="p-2 border"><select class="w-full p-1 border rounded item-kondisi" required><option value="Baik" selected>Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option></select></td>
+                <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold bg-red-100 hover:bg-red-200 px-2 rounded">X</button></td>
+            `;
+            tbody.appendChild(tr);
+            hitungTotalLive();
+        }
+
+        function hapusBaris(btn) { 
+            btn.closest('tr').remove(); 
+            hitungTotalLive(); 
         }
 
         function hitungBaris(el) {
@@ -707,29 +778,7 @@
             reader.readAsDataURL(file);
         }
 
-        function tambahBarang() {
-            const tbody = document.getElementById('bodyBarang');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-uraian" required></td>
-                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded item-merk" value="-" required></td>
-                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-jumlah" value="1" oninput="hitungBaris(this)" required></td>
-                <td class="p-2 border"><select class="w-full p-1 border rounded item-satuan" required><option value="BUAH" selected>Buah</option><option value="UNIT">Unit</option><option value="PCS">Pcs</option><option value="EKS">Eks</option><option value="LEMBAR">Lembar</option><option value="PAKET">Paket</option><option value="DOS">Dos</option><option value="PAK">Pak</option><option value="GROSIR">Grosir</option><option value="SET">Set</option><option value="PASANG">Pasang</option></select></td>
-                <td class="p-2 border"><input type="number" class="w-full p-1 border rounded item-harga" value="0" oninput="hitungBaris(this)" required></td>
-                <td class="p-2 border"><input type="text" class="w-full p-1 border rounded bg-indigo-50 item-total font-bold text-right text-indigo-700" value="0" readonly></td>
-                <td class="p-2 border text-center"><input type="file" accept="image/*" class="hidden item-foto-input" onchange="prosesKompresiFoto(this)"><button type="button" onclick="this.previousElementSibling.click()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded block w-full mb-1">Pilih Foto</button><div class="flex justify-center"><img src="" class="h-10 w-auto hidden item-preview-img rounded border shadow-sm"></div></td>
-                <td class="p-2 border"><select class="w-full p-1 border rounded item-kondisi" required><option value="Baik" selected>Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option></select></td>
-                <td class="p-2 border text-center"><button type="button" onclick="hapusBaris(this)" class="text-red-500 font-bold bg-red-100 hover:bg-red-200 px-2 rounded">X</button></td>
-            `;
-            tbody.appendChild(tr);
-            hitungTotalLive();
-        }
-
-        function hapusBaris(btn) { 
-            btn.closest('tr').remove(); 
-            hitungTotalLive(); 
-        }
-
+        // 6. FUNGSI KUMPULKAN & CETAK
         function kumpulkanData() {
             const items = [];
             let subtotal = 0;
@@ -761,108 +810,123 @@
         }
 
         function siapkanCetak(jenis) {
-            if(!document.getElementById('mainForm').checkValidity()) { alert("Harap lengkapi semua input data terlebih dahulu."); return; }
-
-            const data = kumpulkanData();
-            const angkaKeHuruf = (angka) => {
-                const h = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
-                if (angka < 12) return h[angka]; if (angka < 20) return h[angka - 10] + " Belas"; if (angka < 100) return h[Math.floor(angka / 10)] + " Puluh " + h[angka % 10];
-                if (angka === 2024) return "Dua Ribu Dua Puluh Empat"; if (angka === 2025) return "Dua Ribu Dua Puluh Lima"; if (angka === 2026) return "Dua Ribu Dua Puluh Enam"; return angka.toString();
-            };
-            const formatTerbilang = (dateStr) => {
-                const d = new Date(dateStr);
-                const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][d.getDay()];
-                const bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][d.getMonth()];
-                return `${hari} Tanggal ${angkaKeHuruf(d.getDate())} Bulan ${bulan} Tahun ${angkaKeHuruf(d.getFullYear())}`;
-            };
-
-            const tglTerbilang = formatTerbilang(data.tanggalDokumen);
-
-            document.querySelectorAll('.print-terbilang-tanggal').forEach(el => el.innerText = tglTerbilang);
-            document.querySelectorAll('.print-no-spk').forEach(el => el.innerText = data.noSpk);
-            document.querySelectorAll('.print-tgl-spk').forEach(el => el.innerText = data.tanggalSpk);
-            document.querySelectorAll('.print-perusahaan').forEach(el => el.innerText = data.namaPenyedia);
-            document.querySelectorAll('.print-pimpinan').forEach(el => el.innerText = data.namaDirektur);
-            document.querySelectorAll('.print-no-lampiran-bap').forEach(el => el.innerText = data.noLampiranBap);
-            document.querySelectorAll('.print-no-bapb').forEach(el => el.innerText = data.noBapb);
-            document.querySelectorAll('.print-ketua-panitia').forEach(el => el.innerText = data.ketuaPanitia);
-            document.querySelectorAll('.print-anggota-1').forEach(el => el.innerText = data.anggota1);
-            document.querySelectorAll('.print-anggota-2').forEach(el => el.innerText = data.anggota2);
-            document.querySelectorAll('.print-anggota-3').forEach(el => el.innerText = data.anggota3);
-            document.querySelectorAll('.print-anggota-4').forEach(el => el.innerText = data.anggota4);
-            document.querySelectorAll('.print-anggota-5').forEach(el => el.innerText = data.anggota5);
-            document.querySelectorAll('.print-pengurus-barang').forEach(el => el.innerText = data.pengurusBarang);
-            document.querySelectorAll('.print-nip-pengurus').forEach(el => el.innerText = data.nipPengurusBarang);
-            document.querySelectorAll('.print-kepala-dinas').forEach(el => el.innerText = data.kepalaDinas);
-            document.querySelectorAll('.print-pangkat-kepala').forEach(el => el.innerText = data.pangkatKepalaDinas);
-            document.querySelectorAll('.print-nip-kepala').forEach(el => el.innerText = data.nipKepalaDinas);
-
-            let htmlBarang = '';
-            let subtotal = 0;
-
-            data.items.forEach((item, index) => {
-                subtotal += item.total;
-                htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
-            });
-
-            document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
-            
-            document.querySelectorAll('.print-subtotal').forEach(el => el.innerText = formatRp(subtotal));
-            
-            if (data.ongkosKirim > 0) {
-                document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.print-ongkir-val').forEach(el => el.innerText = formatRp(data.ongkosKirim));
-            } else {
-                document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.add('hidden'));
-            }
-
-            if (data.isPpn) {
-                document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.print-ppn-val').forEach(el => el.innerText = formatRp(data.ppnNominal));
-            } else {
-                document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.add('hidden'));
-            }
-            
-            document.querySelectorAll('.print-grandtotal').forEach(el => el.innerText = formatRp(data.totalHarga));
-
-            let htmlFoto = '';
-            const itemsWithFoto = data.items.filter(item => item.foto && item.foto !== "");
-            
-            for (let i = 0; i < itemsWithFoto.length; i += 4) {
-                const chunk = itemsWithFoto.slice(i, i + 4);
+            try {
+                const form = document.getElementById('mainForm');
                 
-                htmlFoto += `<div class="print-page halaman-landscape" style="page-break-before: always; padding-top: 1cm;">`;
-                htmlFoto += `<p class="font-bold text-center mb-6 text-xl uppercase underline">LAMPIRAN FOTO DOKUMENTASI BARANG</p>`;
-                htmlFoto += `<div class="grid grid-cols-2 gap-8 text-center px-8">`;
+                // VALIDASI: Ini sangat penting untuk memberi tahu bagian mana yang belum diisi
+                if(!form.checkValidity()) { 
+                    form.reportValidity(); 
+                    alert("Harap lengkapi semua isian Form yang wajib sebelum di Cetak."); 
+                    return; 
+                }
+
+                const data = kumpulkanData();
+                const angkaKeHuruf = (angka) => {
+                    const h = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+                    if (angka < 12) return h[angka]; if (angka < 20) return h[angka - 10] + " Belas"; if (angka < 100) return h[Math.floor(angka / 10)] + " Puluh " + h[angka % 10];
+                    if (angka === 2024) return "Dua Ribu Dua Puluh Empat"; if (angka === 2025) return "Dua Ribu Dua Puluh Lima"; if (angka === 2026) return "Dua Ribu Dua Puluh Enam"; return angka.toString();
+                };
                 
-                chunk.forEach(item => {
-                    htmlFoto += `
-                        <div class="flex flex-col items-center justify-center border-2 border-gray-400 p-4 rounded-lg shadow-sm hindari-terpotong">
-                            <div class="h-64 flex items-center justify-center w-full">
-                                <img src="${item.foto}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                            </div>
-                            <p class="mt-4 font-bold text-lg uppercase bg-gray-100 w-full py-1 border-t-2 border-gray-400">${item.uraian}</p>
-                        </div>
-                    `;
+                const formatTerbilang = (dateStr) => {
+                    if(!dateStr) return "-";
+                    const d = new Date(dateStr);
+                    if(isNaN(d.getTime())) return "-";
+                    const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][d.getDay()];
+                    const bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][d.getMonth()];
+                    return `${hari} Tanggal ${angkaKeHuruf(d.getDate())} Bulan ${bulan} Tahun ${angkaKeHuruf(d.getFullYear())}`;
+                };
+
+                document.querySelectorAll('.print-terbilang-tanggal').forEach(el => el.innerText = formatTerbilang(data.tanggalDokumen));
+                document.querySelectorAll('.print-no-spk').forEach(el => el.innerText = data.noSpk);
+                document.querySelectorAll('.print-tgl-spk').forEach(el => el.innerText = data.tanggalSpk);
+                document.querySelectorAll('.print-perusahaan').forEach(el => el.innerText = data.namaPenyedia);
+                document.querySelectorAll('.print-pimpinan').forEach(el => el.innerText = data.namaDirektur);
+                document.querySelectorAll('.print-no-lampiran-bap').forEach(el => el.innerText = data.noLampiranBap);
+                document.querySelectorAll('.print-no-bapb').forEach(el => el.innerText = data.noBapb);
+                document.querySelectorAll('.print-ketua-panitia').forEach(el => el.innerText = data.ketuaPanitia);
+                document.querySelectorAll('.print-anggota-1').forEach(el => el.innerText = data.anggota1);
+                document.querySelectorAll('.print-anggota-2').forEach(el => el.innerText = data.anggota2);
+                document.querySelectorAll('.print-anggota-3').forEach(el => el.innerText = data.anggota3);
+                document.querySelectorAll('.print-anggota-4').forEach(el => el.innerText = data.anggota4);
+                document.querySelectorAll('.print-anggota-5').forEach(el => el.innerText = data.anggota5);
+                document.querySelectorAll('.print-pengurus-barang').forEach(el => el.innerText = data.pengurusBarang);
+                document.querySelectorAll('.print-nip-pengurus').forEach(el => el.innerText = data.nipPengurusBarang);
+                document.querySelectorAll('.print-kepala-dinas').forEach(el => el.innerText = data.kepalaDinas);
+                document.querySelectorAll('.print-pangkat-kepala').forEach(el => el.innerText = data.pangkatKepalaDinas);
+                document.querySelectorAll('.print-nip-kepala').forEach(el => el.innerText = data.nipKepalaDinas);
+
+                let htmlBarang = '';
+                let subtotal = 0;
+
+                data.items.forEach((item, index) => {
+                    subtotal += item.total;
+                    htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
                 });
+
+                document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
+                document.querySelectorAll('.print-subtotal').forEach(el => el.innerText = formatRp(subtotal));
                 
-                htmlFoto += `</div></div>`;
+                if (data.ongkosKirim > 0) {
+                    document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.print-ongkir-val').forEach(el => el.innerText = formatRp(data.ongkosKirim));
+                } else {
+                    document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.add('hidden'));
+                }
+
+                if (data.isPpn) {
+                    document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.remove('hidden'));
+                    document.querySelectorAll('.print-ppn-val').forEach(el => el.innerText = formatRp(data.ppnNominal));
+                } else {
+                    document.querySelectorAll('.print-ppn-row').forEach(el => el.classList.add('hidden'));
+                }
+                
+                document.querySelectorAll('.print-grandtotal').forEach(el => el.innerText = formatRp(data.totalHarga));
+
+                // ==== MEMBUAT HALAMAN FOTO OTOMATIS ====
+                let htmlFoto = '';
+                const itemsWithFoto = data.items.filter(item => item.foto && item.foto !== "");
+                
+                for (let i = 0; i < itemsWithFoto.length; i += 4) {
+                    const chunk = itemsWithFoto.slice(i, i + 4);
+                    
+                    htmlFoto += `<div class="print-page halaman-landscape" style="page-break-before: always; padding-top: 1cm;">`;
+                    htmlFoto += `<p class="font-bold text-center mb-6 text-xl uppercase underline">LAMPIRAN FOTO DOKUMENTASI BARANG</p>`;
+                    htmlFoto += `<div class="grid grid-cols-2 gap-8 text-center px-8">`;
+                    
+                    chunk.forEach(item => {
+                        htmlFoto += `
+                            <div class="flex flex-col items-center justify-center border-2 border-gray-400 p-4 rounded-lg shadow-sm hindari-terpotong">
+                                <div class="h-64 flex items-center justify-center w-full">
+                                    <img src="${item.foto}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                </div>
+                                <p class="mt-4 font-bold text-lg uppercase bg-gray-100 w-full py-1 border-t-2 border-gray-400">${item.uraian}</p>
+                            </div>
+                        `;
+                    });
+                    
+                    htmlFoto += `</div></div>`;
+                }
+                document.getElementById('print-foto-container').innerHTML = htmlFoto;
+
+                // ==== TAMPILKAN CETAK ====
+                document.getElementById('print-area').classList.remove('hidden');
+                document.getElementById('template-BAP').classList.add('hidden');
+                document.getElementById('template-BAST').classList.add('hidden');
+                
+                if(jenis === 'BAP') document.getElementById('template-BAP').classList.remove('hidden');
+                if(jenis === 'BAST') document.getElementById('template-BAST').classList.remove('hidden');
+
+                setTimeout(() => {
+                    window.print();
+                    setTimeout(() => { document.getElementById('print-area').classList.add('hidden'); }, 1000);
+                }, 300);
+
+            } catch(e) {
+                alert("Kesalahan saat mencetak: " + e.message);
             }
-            document.getElementById('print-foto-container').innerHTML = htmlFoto;
-
-            document.getElementById('print-area').classList.remove('hidden');
-            document.getElementById('template-BAP').classList.add('hidden');
-            document.getElementById('template-BAST').classList.add('hidden');
-            
-            if(jenis === 'BAP') document.getElementById('template-BAP').classList.remove('hidden');
-            if(jenis === 'BAST') document.getElementById('template-BAST').classList.remove('hidden');
-
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => { document.getElementById('print-area').classList.add('hidden'); }, 1000);
-            }, 300);
         }
 
+        // 7. FUNGSI HAPUS & SIMPAN DATABASE
         function hapusData(index) {
             const doc = dataGlobalTersimpan[index];
             if(confirm("YAKIN INGIN MENGHAPUS DATA INI?\nSPK: " + doc.noSpk + "\nPerusahaan: " + doc.namaPenyedia)) {
@@ -885,39 +949,48 @@
         }
 
         function simpanKeDatabase() {
-            if(!document.getElementById('mainForm').checkValidity()) { alert("Harap lengkapi form sebelum menyimpan."); return; }
-            
-            const btn = document.getElementById('btnSimpan');
-            const pesan = document.getElementById('pesanStatus');
-            btn.innerText = "⏳ Memproses..."; btn.disabled = true;
+            try {
+                const form = document.getElementById('mainForm');
+                if(!form.checkValidity()) { 
+                    form.reportValidity(); // Highlight area yang kosong
+                    alert("Gagal Simpan: Harap lengkapi semua input pada form!"); 
+                    return; 
+                }
+                
+                const btn = document.getElementById('btnSimpan');
+                const pesan = document.getElementById('pesanStatus');
+                btn.innerText = "⏳ Memproses..."; btn.disabled = true;
 
-            const dataToSave = kumpulkanData();
-            
-            const payload = {
-                action: editTimestampId ? "update" : "save",
-                data: dataToSave
-            };
-            if(editTimestampId) payload.timestamp = editTimestampId;
+                const dataToSave = kumpulkanData();
+                
+                const payload = {
+                    action: editTimestampId ? "update" : "save",
+                    data: dataToSave
+                };
+                if(editTimestampId) payload.timestamp = editTimestampId;
 
-            fetch(urlAppScript, {
-                method: 'POST',
-                body: JSON.stringify(payload) 
-            })
-            .then(res => res.json())
-            .then(result => {
-                if(result.status === 'success') {
-                    pesan.innerText = result.message;
-                    pesan.className = "text-center mt-3 font-semibold text-green-600";
-                    alert(result.message);
-                    bukaFormBaru(); 
-                    ambilDataTersimpan(); 
-                } else { throw new Error(result.message); }
-            })
-            .catch(error => { alert("Gagal memproses data. Cek koneksi & URL Apps Script."); })
-            .finally(() => { 
-                btn.innerText = editTimestampId ? "💾 Update Data Tersimpan" : "💾 Simpan Data Baru"; 
-                btn.disabled = false; 
-            });
+                fetch(urlAppScript, {
+                    method: 'POST',
+                    body: JSON.stringify(payload) 
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if(result.status === 'success') {
+                        pesan.innerText = result.message;
+                        pesan.className = "text-center mt-3 font-semibold text-green-600";
+                        alert(result.message);
+                        bukaFormBaru(); 
+                        ambilDataTersimpan(); 
+                    } else { throw new Error(result.message); }
+                })
+                .catch(error => { alert("Gagal memproses data. Cek koneksi internet Anda."); })
+                .finally(() => { 
+                    btn.innerText = editTimestampId ? "💾 Update Data Tersimpan" : "💾 Simpan Data Baru"; 
+                    btn.disabled = false; 
+                });
+            } catch(e) {
+                alert("Terdapat error saat menyimpan: " + e.message);
+            }
         }
     </script>
 </body>
