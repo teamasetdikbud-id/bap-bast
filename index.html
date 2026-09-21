@@ -100,7 +100,7 @@
                                     <th class="p-2 border">Tanggal Input</th>
                                     <th class="p-2 border">No. SPK / Kontrak</th>
                                     <th class="p-2 border">Nama Perusahaan</th>
-                                    <th class="p-2 border">Total Harga (Inc. PPN)</th>
+                                    <th class="p-2 border">Total Harga (Inc. PPN & Ongkir)</th>
                                     <th class="p-2 border text-center w-48">Aksi</th>
                                 </tr>
                             </thead>
@@ -131,6 +131,11 @@
                         <h2 class="font-semibold text-lg border-b pb-2 mb-4">Data Penyedia (Rekanan)</h2>
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Perusahaan</label><input type="text" id="namaPerusahaan" class="w-full mt-1 p-2 border rounded" value="CV. SEANA STORE" required></div>
                         <div class="mb-3"><label class="block text-sm font-medium">Nama Direktur/Pimpinan</label><input type="text" id="namaPimpinan" class="w-full mt-1 p-2 border rounded" value="ADELIA PUTRI" required></div>
+                        <!-- Penambahan Input Ongkos Kirim -->
+                        <div class="mb-3 mt-8 border-t pt-4">
+                            <label class="block text-sm font-bold text-indigo-700">Biaya Ongkos Kirim (Rp) - Jika ada</label>
+                            <input type="number" id="ongkosKirim" class="w-full mt-1 p-2 border-2 border-indigo-300 rounded font-bold text-lg" value="0" placeholder="0">
+                        </div>
                     </div>
                 </div>
 
@@ -219,7 +224,6 @@
             <p class="text-justify mb-4">Barang yang BAIK kami beri tanda (V) yang selanjutnya akan diserahkan oleh Rekanan kepada Pejabat Pembuat Komitmen, sedang yang TIDAK BAIK kami beri tanda (x).</p>
             <p class="mb-8">Demikian Berita Acara ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
             
-            <!-- Ditambahkan kelas hindari-terpotong untuk tabel TTD -->
             <table class="w-full text-center mt-8 hindari-terpotong">
                 <tr><td class="w-1/3 align-top">PENYEDIA BARANG/JASA<br><span class="print-perusahaan font-bold"></span></td><td class="w-1/3 align-top">KETUA<br>PANITIA PEMERIKSA BARANG</td><td class="w-1/3 align-top">PANITIA PEMERIKSA<br>BARANG PENGGUNA</td></tr>
                 <tr><td colspan="3" class="h-16"></td></tr>
@@ -251,13 +255,24 @@
                     <tbody class="print-tbody-barang"></tbody>
                     <tfoot>
                         <!-- Footer dengan Jumlah Keseluruhan -->
-                        <tr class="font-bold">
+                        <tr class="font-bold bg-gray-50">
                             <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
                             <td class="text-center print-total-jumlah text-indigo-700"></td>
                             <td></td>
                             <td></td>
                             <td class="text-right print-total-ppn text-indigo-700"></td>
                             <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td></td>
+                        </tr>
+                        <!-- Tambahan Baris Ongkos Kirim & Grand Total -->
+                        <tr class="font-bold print-ongkir-row hidden">
+                            <td colspan="7" class="text-right pr-4 italic">BIAYA ONGKOS KIRIM :</td>
+                            <td class="text-right print-ongkir-val text-red-600"></td>
+                            <td></td>
+                        </tr>
+                        <tr class="font-bold print-ongkir-row hidden bg-gray-100">
+                            <td colspan="7" class="text-right pr-4 uppercase">GRAND TOTAL + ONGKOS KIRIM :</td>
+                            <td class="text-right print-grandtotal-ongkir text-indigo-800"></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -282,7 +297,7 @@
                 </div>
                 <div class="w-24 flex-shrink-0"></div> 
             </div>
-            <!-- Perbaikan Underline Judul BAST -->
+            
             <div class="text-center font-bold mb-6 mt-6">
                 <h2 class="text-xl underline decoration-2 mb-1" style="text-underline-offset: 4px;">BERITA ACARA SERAH TERIMA BARANG</h2>
                 <p class="font-normal text-md mt-2">Nomor : <span class="print-no-bapb"></span></p>
@@ -325,13 +340,24 @@
                     <tbody class="print-tbody-barang"></tbody>
                     <tfoot>
                         <!-- Footer dengan Jumlah Keseluruhan -->
-                        <tr class="font-bold">
+                        <tr class="font-bold bg-gray-50">
                             <td colspan="3" class="text-right pr-4">JUMLAH KESELURUHAN :</td>
                             <td class="text-center print-total-jumlah text-indigo-700"></td>
                             <td></td>
                             <td></td>
                             <td class="text-right print-total-ppn text-indigo-700"></td>
                             <td class="text-right print-total-harga text-indigo-700"></td>
+                            <td></td>
+                        </tr>
+                        <!-- Tambahan Baris Ongkos Kirim & Grand Total -->
+                        <tr class="font-bold print-ongkir-row hidden">
+                            <td colspan="7" class="text-right pr-4 italic">BIAYA ONGKOS KIRIM :</td>
+                            <td class="text-right print-ongkir-val text-red-600"></td>
+                            <td></td>
+                        </tr>
+                        <tr class="font-bold print-ongkir-row hidden bg-gray-100">
+                            <td colspan="7" class="text-right pr-4 uppercase">GRAND TOTAL + ONGKOS KIRIM :</td>
+                            <td class="text-right print-grandtotal-ongkir text-indigo-800"></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -397,6 +423,7 @@
             document.getElementById('btnSimpan').classList.replace('bg-orange-600', 'bg-teal-600');
             document.getElementById('btnSimpan').classList.replace('hover:bg-orange-700', 'hover:bg-teal-700');
             
+            document.getElementById('ongkosKirim').value = "0"; // Reset ongkir
             document.getElementById('bodyBarang').innerHTML = '';
             tambahBarang();
             navigasi('form');
@@ -513,6 +540,10 @@
             document.getElementById('noBapb').value = data.noBapb || '';
             document.getElementById('namaPerusahaan').value = data.namaPenyedia || '';
             document.getElementById('namaPimpinan').value = data.namaDirektur || '';
+            
+            // Pengisian nilai ongkos kirim jika ada di data tersimpan
+            document.getElementById('ongkosKirim').value = data.ongkosKirim || 0;
+            
             document.getElementById('ketuaPanitia').value = data.ketuaPanitia || '';
             document.getElementById('anggota1').value = data.anggota1 || '';
             document.getElementById('anggota2').value = data.anggota2 || '';
@@ -663,6 +694,8 @@
         function kumpulkanData() {
             const items = [];
             let totalSemua = 0;
+            const ongkosKirim = parseFloat(document.getElementById('ongkosKirim').value) || 0;
+
             document.querySelectorAll('#bodyBarang tr').forEach(row => {
                 const uraian = row.querySelector('.item-uraian').value;
                 const merk = row.querySelector('.item-merk').value;
@@ -681,8 +714,11 @@
                 items.push({ uraian, merk, jumlah, satuan, harga, isPpn, ppnNominal, total: totalIncludePpn, kondisi, foto });
             });
 
+            // Total Keseluruhan = Total Barang + Ongkos Kirim
+            totalSemua += ongkosKirim; 
+
             return {
-                tanggalDokumen: document.getElementById('tglDokumen').value, noSpk: document.getElementById('noSpk').value, tanggalSpk: document.getElementById('tglSpk').value, noLampiranBap: document.getElementById('noLampiranBap').value, noBapb: document.getElementById('noBapb').value, namaPenyedia: document.getElementById('namaPerusahaan').value, namaDirektur: document.getElementById('namaPimpinan').value, ketuaPanitia: document.getElementById('ketuaPanitia').value, anggota1: document.getElementById('anggota1').value, anggota2: document.getElementById('anggota2').value, anggota3: document.getElementById('anggota3').value, anggota4: document.getElementById('anggota4').value, anggota5: document.getElementById('anggota5').value, pengurusBarang: document.getElementById('pengurusBarang').value, nipPengurusBarang: document.getElementById('nipPengurusBarang').value, kepalaDinas: document.getElementById('kepalaDinas').value, pangkatKepalaDinas: document.getElementById('pangkatKepalaDinas').value, nipKepalaDinas: document.getElementById('nipKepalaDinas').value, items: items, totalHarga: totalSemua
+                tanggalDokumen: document.getElementById('tglDokumen').value, noSpk: document.getElementById('noSpk').value, tanggalSpk: document.getElementById('tglSpk').value, noLampiranBap: document.getElementById('noLampiranBap').value, noBapb: document.getElementById('noBapb').value, namaPenyedia: document.getElementById('namaPerusahaan').value, namaDirektur: document.getElementById('namaPimpinan').value, ongkosKirim: ongkosKirim, ketuaPanitia: document.getElementById('ketuaPanitia').value, anggota1: document.getElementById('anggota1').value, anggota2: document.getElementById('anggota2').value, anggota3: document.getElementById('anggota3').value, anggota4: document.getElementById('anggota4').value, anggota5: document.getElementById('anggota5').value, pengurusBarang: document.getElementById('pengurusBarang').value, nipPengurusBarang: document.getElementById('nipPengurusBarang').value, kepalaDinas: document.getElementById('kepalaDinas').value, pangkatKepalaDinas: document.getElementById('pangkatKepalaDinas').value, nipKepalaDinas: document.getElementById('nipKepalaDinas').value, items: items, totalHarga: totalSemua
             };
         }
 
@@ -726,12 +762,12 @@
             let htmlBarang = '';
             let totalQty = 0;
             let totalPpn = 0;
-            let grandTotal = 0;
+            let grandTotalBarang = 0;
 
             data.items.forEach((item, index) => {
                 totalQty += item.jumlah;
                 totalPpn += item.ppnNominal;
-                grandTotal += item.total;
+                grandTotalBarang += item.total;
                 
                 htmlBarang += `<tr><td class="text-center">${index + 1}</td><td>${item.uraian}</td><td class="text-center">${item.merk}</td><td class="text-center">${item.jumlah}</td><td class="text-center">${item.satuan}</td><td class="text-right">${formatRp(item.harga)}</td><td class="text-right">${formatRp(item.ppnNominal)}</td><td class="text-right font-bold">${formatRp(item.total)}</td><td class="text-center">${item.kondisi}</td></tr>`;
             });
@@ -739,7 +775,16 @@
             document.querySelectorAll('.print-tbody-barang').forEach(el => el.innerHTML = htmlBarang);
             document.querySelectorAll('.print-total-jumlah').forEach(el => el.innerText = totalQty);
             document.querySelectorAll('.print-total-ppn').forEach(el => el.innerText = formatRp(totalPpn));
-            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(grandTotal));
+            document.querySelectorAll('.print-total-harga').forEach(el => el.innerText = formatRp(grandTotalBarang));
+
+            // Logika Menampilkan Ongkos Kirim pada Halaman Cetak
+            if (data.ongkosKirim > 0) {
+                document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.print-ongkir-val').forEach(el => el.innerText = formatRp(data.ongkosKirim));
+                document.querySelectorAll('.print-grandtotal-ongkir').forEach(el => el.innerText = formatRp(data.totalHarga));
+            } else {
+                document.querySelectorAll('.print-ongkir-row').forEach(el => el.classList.add('hidden'));
+            }
 
             let htmlFoto = '';
             const itemsWithFoto = data.items.filter(item => item.foto && item.foto !== "");
